@@ -4,34 +4,54 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>똑재 하락장 물타기 계산기</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 <style>
 :root {
-  --bg: #0f1419; --bg-card: #1a2028; --bg-elevated: #232b35;
-  --border: #2d3744; --border-light: #3a4654;
-  --text: #e8ecf0; --text-dim: #8b98a8; --text-mute: #5f6b78;
-  --mint: #4ecdc4; --mint-dark: #2ea99f; --mint-soft: rgba(78, 205, 196, 0.1);
-  --gold: #f4c430; --red: #ff6b6b; --red-soft: rgba(255, 107, 107, 0.12);
-  --green: #51cf66; --green-soft: rgba(81, 207, 102, 0.12);
-  --orange: #ff9f43; --blue: #4dabf7; --purple: #9775fa;
-  --us-color: #4dabf7;
-  --intl-color: #9775fa;
-  --kr-color: #f4c430;
+  /* ── 똑재TV 디자인 시스템 (references/design-system.md) ── */
+  --bg: #F5EFE6;             /* 메인 크림 배경 */
+  --bg-alt: #EFE7DA;         /* 보조 배경 */
+  --ink: #1A1A1A;            /* 메인 텍스트 (순검정 금지) */
+  --ink-soft: #4A4A4A;
+  --ink-mute: #8B8276;
+  --accent: #D9542B;         /* 메인 오렌지 */
+  --accent-soft: #F4D5C4;
+  --border: #E5DCC8;
+  --white: #FBF7F0;          /* 카드 배경 (순백 금지) */
+  --brown: #8B6F47;
+  --beige-gold: #C4A57B;
+  --dark-warm: #3A2F26;      /* 다크 박스 */
+  --dark-warm-soft: #5A4A3D;
+
+  /* ── 기존 클래스가 참조하던 이름들을 위 팔레트로 잇는다 ──
+     클래스를 전부 갈아엎지 않고도 톤이 한 번에 바뀌도록 별칭으로 둔 것. */
+  --bg-card: var(--white);
+  --bg-elevated: var(--bg-alt);
+  --border-light: #D9CDB4;
+  --text: var(--ink);
+  --text-dim: var(--ink-soft);
+  --text-mute: var(--ink-mute);
+  --mint: var(--accent);              /* 예전 민트 강조 → 오렌지 */
+  --mint-dark: #A03D1F;
+  --mint-soft: rgba(217, 84, 43, 0.10);
+  --gold: #B8813F;
+  --red: #B23A1E;  --red-soft: rgba(178, 58, 30, 0.10);
+  --green: #3F6B4A; --green-soft: rgba(63, 107, 74, 0.12);
+  --orange: var(--accent);
+  --blue: #4A6B8A; --purple: #7A6A8A;
+  --us-color: #4A6B8A;
+  --intl-color: #8B6F47;
+  --kr-color: #B8813F;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  background: var(--bg); color: var(--text);
-  font-family: 'IBM Plex Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 400; min-height: 100vh;
-  background-image:
-    radial-gradient(at 10% 0%, rgba(78, 205, 196, 0.08) 0, transparent 50%),
-    radial-gradient(at 90% 100%, rgba(151, 117, 250, 0.06) 0, transparent 50%);
+  background: var(--bg); color: var(--ink);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500; min-height: 100vh;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
-.mono { font-family: 'JetBrains Mono', monospace; }
-.container { max-width: 1400px; margin: 0 auto; padding: 32px 24px 80px; }
+.mono { font-family: 'Pretendard', -apple-system, sans-serif; font-variant-numeric: tabular-nums; }
+.container { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
 
 /* HEADER */
 .header {
@@ -42,16 +62,16 @@ body {
 .brand { display: flex; align-items: center; gap: 14px; }
 .brand-mark {
   width: 44px; height: 44px;
-  background: linear-gradient(135deg, var(--mint), var(--mint-dark));
-  border-radius: 10px;
+  background: var(--dark-warm);
+  border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 20px; color: #0f1419;
-  font-family: 'Gowun Dodum', serif;
+  font-weight: 800; font-size: 21px; color: var(--white);
+  letter-spacing: -0.5px;
 }
-.brand-text h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+.brand-text h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; color: var(--ink); }
 .brand-text .sub {
-  font-size: 13px; color: var(--text-dim);
-  font-family: 'JetBrains Mono', monospace; margin-top: 2px;
+  font-size: 11px; color: var(--ink-mute); font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; margin-top: 3px;
 }
 .header-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
@@ -74,14 +94,14 @@ body {
   color: var(--mint);
 }
 .external-link-btn.yt:hover {
-  background: rgba(255, 0, 0, 0.1);
-  border-color: #ff3030;
-  color: #ff5050;
+  background: rgba(255, 0, 0, 0.07);
+  border-color: #E23B2E;
+  color: #CC2B22;
 }
 .external-link-btn.cafe:hover {
-  background: rgba(3, 199, 90, 0.1);
-  border-color: #03c75a;
-  color: #03c75a;
+  background: rgba(3, 199, 90, 0.09);
+  border-color: #03C75A;
+  color: #029447;
 }
 .external-link-btn .ext-icon { font-size: 14px; }
 .external-link-btn .ext-icon-svg {
@@ -99,13 +119,124 @@ body {
 
 /* CARD */
 .card {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 16px; padding: 24px; margin-bottom: 20px;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 20px;              /* 큰 라운드가 똑재TV 시그니처 */
+  padding: 28px; margin-bottom: 24px;
 }
 .card-title {
-  font-size: 13px; font-weight: 600; color: var(--mint);
+  font-size: 13px; font-weight: 800; color: var(--accent);
   text-transform: uppercase; letter-spacing: 1.2px;
   margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+
+/* ── 디자인 시스템 컴포넌트 ───────────────────────────── */
+
+/* STEP 라벨 — 입력·결과 흐름을 끊어 보여준다 */
+.step-label {
+  display: flex; align-items: center; gap: 10px;
+  margin: 34px 0 14px;
+}
+.step-line { width: 28px; height: 2px; background: var(--accent); flex-shrink: 0; }
+.step-text {
+  font-size: 12px; font-weight: 800;
+  letter-spacing: 1.5px; color: var(--accent);
+}
+
+/* 카테고리 태그 */
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--white);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  padding: 6px 14px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+}
+.tag .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+
+/* 상단 CTA — 베이지 박스 */
+.top-cta {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 22px;
+  margin-bottom: 28px;
+}
+.top-cta-text { font-size: 13.5px; font-weight: 600; color: var(--ink-soft); }
+.top-cta-links { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* 인사이트 박스 — 다크 브라운, 페이지에서 가장 중요한 메시지 */
+.insight-box {
+  background: var(--dark-warm);
+  border-radius: 20px;
+  padding: 30px 32px;
+  margin: 36px 0 20px;
+  color: #EFE7DA;
+}
+.insight-label { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; }
+.insight-label-text {
+  font-size: 11px; font-weight: 800; letter-spacing: 1.6px;
+  color: var(--accent);
+}
+.insight-title {
+  font-size: 21px; font-weight: 800; letter-spacing: -0.5px;
+  color: var(--white); margin-bottom: 10px; line-height: 1.35;
+}
+.insight-desc {
+  font-size: 14px; font-weight: 500; line-height: 1.75;
+  color: #CFC4B4;
+}
+.insight-desc b { color: var(--accent-soft); font-weight: 800; }
+.insight-cta {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 22px; padding-top: 20px;
+  border-top: 1px solid var(--dark-warm-soft);
+}
+.insight-cta-text {
+  font-size: 13px; font-weight: 700; color: #CFC4B4; margin-right: 4px;
+}
+.cta-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border-radius: 999px;
+  font-size: 13px; font-weight: 700; text-decoration: none;
+  transition: transform .15s ease, filter .15s ease;
+}
+.cta-link:hover { transform: translateY(-1px); filter: brightness(1.06); }
+.cta-link.primary { background: var(--accent); color: var(--white); }
+.cta-link.secondary { background: var(--white); color: var(--dark-warm); }
+.naver-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; border-radius: 3px;
+  background: #03C75A; color: #fff;
+  font-size: 10px; font-weight: 800; line-height: 1;
+}
+
+/* ── 모바일 대응 ─────────────────────────────────────
+   PC 디자인은 건드리지 않고 여기서만 조정한다. */
+@media (max-width: 768px) {
+  body { padding: 0; }
+  .container { padding: 16px 12px 60px; }
+  .card { padding: 18px 16px !important; border-radius: 16px !important; }
+  .header { align-items: flex-start; padding-bottom: 18px; margin-bottom: 18px; }
+  .brand-mark { width: 38px !important; height: 38px !important; font-size: 18px !important; }
+  .brand-text h1 { font-size: 17px; }
+  .brand-text .sub { font-size: 10px; letter-spacing: 1px; }
+  .top-cta { flex-direction: column; align-items: stretch; padding: 16px; gap: 12px; }
+  .top-cta-links { justify-content: stretch; }
+  .top-cta-links .cta-link { flex: 1; justify-content: center; }
+  .step-label { margin: 26px 0 12px; }
+  .step-text { font-size: 11px; letter-spacing: 1.2px; }
+  .insight-box { padding: 24px 18px; border-radius: 16px; }
+  .insight-title { font-size: 18px; }
+  .insight-desc { font-size: 13px; }
+  .insight-desc br { display: none; }
+  .insight-cta { flex-direction: column; align-items: stretch; }
+  .insight-cta .cta-link { justify-content: center; }
+}
+@media (max-width: 380px) {
+  .brand-text h1 { font-size: 15px; }
+  .insight-title { font-size: 16px; }
 }
 .card-title::before {
   content: ''; width: 3px; height: 14px;
@@ -137,37 +268,37 @@ body {
 .macro-label .source {
   font-size: 10px; color: var(--text-mute);
   padding: 2px 6px; background: var(--bg); border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .macro-input-row { display: flex; align-items: baseline; gap: 8px; }
 .macro-input {
   background: transparent; border: none; color: var(--text);
-  font-family: 'JetBrains Mono', monospace; font-size: 24px;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 24px;
   font-weight: 600; width: 100%; outline: none;
 }
-.macro-range { font-size: 10px; color: var(--text-mute); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+.macro-range { font-size: 10px; color: var(--text-mute); font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .macro-interpret { margin-top: 8px; font-size: 11px; color: var(--text-dim); min-height: 22px; }
 .status-badge {
   display: inline-block; padding: 3px 10px; border-radius: 12px;
   font-size: 11px; font-weight: 600;
   background: var(--bg); border: 1px solid var(--border);
 }
-.status-badge.extreme-fear { background: rgba(81, 207, 102, 0.18); color: #51cf66; border-color: #51cf66; }
-.status-badge.fear { background: rgba(169, 227, 75, 0.15); color: #a9e34b; border-color: #a9e34b; }
-.status-badge.neutral { background: rgba(244, 196, 48, 0.15); color: #f4c430; border-color: #f4c430; }
-.status-badge.greed { background: rgba(255, 159, 67, 0.15); color: #ff9f43; border-color: #ff9f43; }
-.status-badge.extreme-greed { background: rgba(255, 107, 107, 0.18); color: #ff6b6b; border-color: #ff6b6b; }
+.status-badge.extreme-fear  { background: rgba(63,107,74,0.14);  color: #3F6B4A; border-color: #3F6B4A; }
+.status-badge.fear          { background: rgba(90,124,90,0.13);  color: #5A7C5A; border-color: #5A7C5A; }
+.status-badge.neutral       { background: rgba(196,165,123,0.20); color: #8A6D3B; border-color: #C4A57B; }
+.status-badge.greed         { background: rgba(184,129,63,0.15); color: #B8813F; border-color: #B8813F; }
+.status-badge.extreme-greed { background: rgba(217,84,43,0.14);  color: #A03D1F; border-color: #A03D1F; }
 .mini-gauge {
   margin-top: 6px; height: 6px; width: 100%;
-  background: linear-gradient(to right, #51cf66 0%, #a9e34b 25%, #f4c430 50%, #ff9f43 75%, #ff6b6b 100%);
+  background: linear-gradient(to right, #3F6B4A 0%, #5A7C5A 25%, #C4A57B 50%, #B8813F 75%, #A03D1F 100%);
   border-radius: 3px; position: relative;
 }
 .mini-gauge-marker {
   position: absolute; top: -3px; width: 3px; height: 12px;
-  background: #e8ecf0; border-radius: 1px;
+  background: var(--dark-warm); border-radius: 1px;
   transition: left 0.4s cubic-bezier(.4,1.5,.5,1);
-  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+  box-shadow: 0 0 4px rgba(58,47,38,0.35);
 }
 
 .refresh-btn {
@@ -191,11 +322,11 @@ body {
   font-size: 11px;
   cursor: pointer;
 }
-.ttokjae-fg-btn:hover { background: rgba(244,196,48,0.1); }
+.ttokjae-fg-btn:hover { background: rgba(217,84,43,0.08); }
 
 .auto-refresh-all {
   width: 100%; margin-top: 8px;
-  background: var(--mint); color: #0f1419; border: none;
+  background: var(--accent); color: var(--white); border: none;
   padding: 12px; border-radius: 10px;
   font-family: inherit; font-weight: 600; font-size: 14px;
   cursor: pointer; transition: all 0.15s;
@@ -222,7 +353,7 @@ body {
   margin-bottom: 10px;
 }
 .weight-value {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
   font-size: 14px; font-weight: 700;
   color: var(--mint); min-width: 40px; text-align: right;
 }
@@ -236,18 +367,18 @@ body {
   -webkit-appearance: none; appearance: none;
   width: 18px; height: 18px; border-radius: 50%;
   background: var(--mint); cursor: pointer;
-  box-shadow: 0 0 6px rgba(78,205,196,0.5);
-  border: 2px solid #0f1419;
+  box-shadow: 0 1px 4px rgba(58,47,38,0.25);
+  border: 2px solid var(--white);
 }
 .weight-slider::-moz-range-thumb {
   width: 18px; height: 18px; border-radius: 50%;
   background: var(--mint); cursor: pointer;
-  border: 2px solid #0f1419;
+  border: 2px solid var(--white);
 }
 
 /* HISTORY SECTION */
 .history-section {
-  background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));
+  background: var(--white);
   border: 1px solid var(--border); border-radius: 16px;
   padding: 20px; margin-bottom: 20px;
 }
@@ -261,7 +392,7 @@ body {
 }
 .history-count {
   font-size: 11px; color: var(--text-mute);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
   padding: 3px 8px; background: var(--bg); border-radius: 6px;
 }
 .history-actions {
@@ -293,7 +424,7 @@ body {
 }
 .history-item:hover {
   border-color: var(--mint);
-  background: rgba(78,205,196,0.04);
+  background: rgba(217,84,43,0.04);
 }
 .history-item.selected {
   border-color: var(--mint);
@@ -301,14 +432,14 @@ body {
 }
 .history-item.compare-a {
   border-color: var(--blue);
-  background: rgba(77,171,247,0.08);
+  background: rgba(74,107,138,0.06);
 }
 .history-item.compare-b {
   border-color: var(--purple);
-  background: rgba(151,117,250,0.08);
+  background: rgba(139,111,71,0.06);
 }
 .history-date {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--text);
   white-space: nowrap;
@@ -321,15 +452,15 @@ body {
   color: var(--text-mute);
   margin-left: 6px;
 }
-.history-type-badge.auto { background: rgba(77,171,247,0.15); color: var(--blue); }
-.history-type-badge.manual { background: rgba(244,196,48,0.15); color: var(--gold); }
+.history-type-badge.auto { background: rgba(74,107,138,0.13); color: var(--blue); }
+.history-type-badge.manual { background: rgba(184,129,63,0.15); color: var(--gold); }
 .history-summary {
   font-size: 11px; color: var(--text-dim);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .history-summary .macro-tag {
   display: inline-block; padding: 1px 6px; border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 10px;
   margin-right: 4px; background: var(--bg-elevated);
 }
 .history-note {
@@ -354,7 +485,7 @@ body {
 /* COMPARE MODE */
 .compare-banner {
   padding: 12px 16px;
-  background: linear-gradient(90deg, rgba(77,171,247,0.1), rgba(151,117,250,0.1));
+  background: linear-gradient(90deg, rgba(217,84,43,0.08), rgba(196,165,123,0.10));
   border: 1px solid var(--mint);
   border-radius: 10px;
   margin-bottom: 14px;
@@ -395,7 +526,7 @@ body {
   font-size: 10px; color: var(--text-mute);
 }
 .snapshot-macros .val {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
   font-size: 18px; font-weight: 600;
 }
 
@@ -430,7 +561,7 @@ body {
 .ticker-input {
   width: 100%; background: var(--bg); border: 1px solid var(--border);
   border-radius: 8px; padding: 12px 14px; color: var(--text);
-  font-family: 'JetBrains Mono', monospace; font-size: 14px; outline: none;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 14px; outline: none;
   transition: border-color 0.15s;
 }
 .ticker-input:focus { border-color: var(--mint); }
@@ -440,7 +571,7 @@ body {
   margin-top: 4px; background: var(--bg-card);
   border: 1px solid var(--border); border-radius: 10px;
   max-height: 300px; overflow-y: auto; z-index: 100;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  box-shadow: 0 16px 44px rgba(58,47,38,0.18);
   display: none;
 }
 .autocomplete.active { display: block; }
@@ -463,7 +594,7 @@ body {
 .autocomplete-item:last-child { border-bottom: none; }
 .autocomplete-item:hover, .autocomplete-item.highlighted { background: var(--mint-soft); }
 .autocomplete-item .ticker {
-  font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--mint); font-size: 13px;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--mint); font-size: 13px;
 }
 .autocomplete-item .name { font-size: 12px; color: var(--text); flex: 1; margin: 0 10px; }
 .autocomplete-item .exch { font-size: 10px; color: var(--text-mute); }
@@ -471,10 +602,10 @@ body {
 .holdings-input {
   background: var(--bg); border: 1px solid var(--border);
   border-radius: 8px; padding: 12px 14px; color: var(--text);
-  font-family: 'JetBrains Mono', monospace; font-size: 14px; outline: none; text-align: right;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 14px; outline: none; text-align: right;
 }
 .btn {
-  background: var(--mint); color: #0f1419; border: none;
+  background: var(--accent); color: var(--white); border: none;
   padding: 12px 20px; border-radius: 8px;
   font-family: inherit; font-weight: 600; font-size: 13px;
   cursor: pointer; transition: background 0.15s; white-space: nowrap;
@@ -513,14 +644,14 @@ body {
 .group-badge {
   display: inline-block; padding: 3px 10px; border-radius: 6px;
   font-size: 11px; font-weight: 600;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
 }
-.group.us .group-badge { background: rgba(77,171,247,0.15); color: var(--us-color); }
-.group.intl .group-badge { background: rgba(151,117,250,0.15); color: var(--intl-color); }
-.group.kr .group-badge { background: rgba(244,196,48,0.15); color: var(--kr-color); }
+.group.us .group-badge { background: rgba(74,107,138,0.13); color: var(--us-color); }
+.group.intl .group-badge { background: rgba(139,111,71,0.15); color: var(--intl-color); }
+.group.kr .group-badge { background: rgba(184,129,63,0.15); color: var(--kr-color); }
 .group-indicator {
   font-size: 11px; color: var(--text-mute);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
 }
 .group-indicator strong { color: var(--text-dim); }
 
@@ -544,15 +675,15 @@ body {
 .ticker-table td {
   padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle;
 }
-.ticker-table tr:hover td { background: rgba(78, 205, 196, 0.03); }
+.ticker-table tr:hover td { background: rgba(217,84,43,0.035); }
 .ticker-table tr.draggable { cursor: grab; }
 .ticker-table tr.draggable:active { cursor: grabbing; }
 .ticker-table tr.dragging { opacity: 0.3; }
 
-.ticker-table .num { font-family: 'JetBrains Mono', monospace; text-align: right; white-space: nowrap; }
+.ticker-table .num { font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .ticker-table .name { font-weight: 500; }
 .ticker-table .ticker-code {
-  color: var(--text-mute); font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--text-mute); font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 11px;
 }
 .drag-handle {
   color: var(--text-mute); cursor: grab; padding: 0 4px;
@@ -562,20 +693,20 @@ body {
 
 .pct-badge {
   display: inline-block; padding: 2px 6px; border-radius: 4px;
-  font-size: 10px; font-family: 'JetBrains Mono', monospace; margin-left: 4px;
+  font-size: 10px; font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; margin-left: 4px;
 }
 .pct-up { background: var(--red-soft); color: var(--red); }
 .pct-down { background: var(--green-soft); color: var(--green); }
 .score-pill {
   display: inline-block; padding: 4px 10px; border-radius: 6px;
-  font-family: 'JetBrains Mono', monospace; font-weight: 600;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-weight: 800;
   font-size: 12px; min-width: 44px; text-align: center;
 }
 .signal-badge {
-  display: inline-block; padding: 5px 10px; border-radius: 6px;
-  font-size: 11px; font-weight: 600; white-space: nowrap;
+  display: inline-block; padding: 5px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
 }
-.action-amount { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; }
+.action-amount { font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; }
 
 .empty-state { text-align: center; padding: 32px 20px; color: var(--text-mute); }
 .empty-state .icon { font-size: 32px; margin-bottom: 8px; opacity: 0.5; }
@@ -584,14 +715,14 @@ body {
 /* MODAL */
 .modal-backdrop {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7); z-index: 1000;
+  background: rgba(58,47,38,0.55); z-index: 1000;
   display: none; align-items: center; justify-content: center;
   padding: 20px;
 }
 .modal-backdrop.show { display: flex; }
 .modal {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 16px; padding: 28px;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 20px; padding: 28px;
   max-width: 600px; width: 100%;
   max-height: 90vh; overflow-y: auto;
 }
@@ -614,7 +745,7 @@ body {
 .fg-gauge-svg { width: 220px; height: auto; }
 .fg-gauge-info { flex: 1; min-width: 150px; }
 .fg-gauge-value {
-  font-family: 'JetBrains Mono', monospace; font-size: 48px;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 48px;
   font-weight: 600; letter-spacing: -2px;
 }
 .fg-gauge-status {
@@ -640,7 +771,7 @@ body {
 }
 .guide-card h4 { font-size: 13px; margin-bottom: 4px; }
 .guide-card .range {
-  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 10px;
   color: var(--text-mute); margin-top: 4px; margin-bottom: 6px;
 }
 .guide-card p { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
@@ -648,10 +779,10 @@ body {
 .toast {
   position: fixed; bottom: 30px; left: 50%;
   transform: translateX(-50%) translateY(100px);
-  background: var(--mint); color: #0f1419;
+  background: var(--accent); color: var(--white);
   padding: 12px 24px; border-radius: 10px;
   font-size: 13px; font-weight: 600;
-  box-shadow: 0 10px 30px rgba(78, 205, 196, 0.3);
+  box-shadow: 0 8px 24px rgba(217,84,43,0.22);
   opacity: 0; transition: all 0.3s; z-index: 1100;
 }
 .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -668,7 +799,7 @@ body {
 .external-cta {
   margin: 32px 0 12px;
   padding: 24px;
-  background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));
+  background: var(--white);
   border: 1px solid var(--border);
   border-radius: 16px;
 }
@@ -701,15 +832,15 @@ body {
 .cta-card:hover {
   border-color: var(--mint);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(78, 205, 196, 0.15);
+  box-shadow: 0 6px 18px rgba(217,84,43,0.14);
 }
 .cta-card.cta-youtube:hover {
-  border-color: #ff5050;
-  box-shadow: 0 6px 20px rgba(255, 80, 80, 0.2);
+  border-color: #E23B2E;
+  box-shadow: 0 6px 18px rgba(226,59,46,0.16);
 }
 .cta-card.cta-cafe:hover {
-  border-color: #03c75a;
-  box-shadow: 0 6px 20px rgba(3, 199, 90, 0.2);
+  border-color: #03C75A;
+  box-shadow: 0 6px 18px rgba(3,199,90,0.16);
 }
 .cta-icon {
   width: 36px; height: 36px;
@@ -736,8 +867,8 @@ body {
   color: var(--mint);
   transform: translateX(4px);
 }
-.cta-card.cta-youtube:hover .cta-arrow { color: #ff5050; }
-.cta-card.cta-cafe:hover .cta-arrow { color: #03c75a; }
+.cta-card.cta-youtube:hover .cta-arrow { color: #CC2B22; }
+.cta-card.cta-cafe:hover .cta-arrow { color: #029447; }
 
 .footer {
   text-align: center; padding: 30px 20px 20px;
@@ -751,10 +882,10 @@ body {
 
 <div class="header">
   <div class="brand">
-    <div class="brand-mark">T</div>
+    <div class="brand-mark">똑</div>
     <div class="brand-text">
-      <h1>하락장 물타기 계산기 <span style="color:var(--mint);font-size:14px;">v3</span></h1>
-      <div class="sub">똑재TV × Auto Classification + Yahoo/Naver/CNN</div>
+      <h1>똑재TV</h1>
+      <div class="sub">WATER-DOWN CALCULATOR</div>
     </div>
   </div>
   <div class="header-right">
@@ -775,9 +906,31 @@ body {
   </div>
 </div>
 
+<!-- 상단 CTA -->
+<div class="top-cta">
+  <div class="top-cta-text">
+    시장 지표와 종목 보조지표를 함께 보고 <b style="color:var(--accent);">물타기 강도</b>를 9단계로 잡아드립니다.
+  </div>
+  <div class="top-cta-links">
+    <a href="https://www.youtube.com/@ttok_jae" target="_blank" rel="noopener" class="cta-link primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      똑재TV 구독하기
+    </a>
+    <a href="https://cafe.naver.com/ttokjae" target="_blank" rel="noopener" class="cta-link secondary" style="border:1px solid var(--border);">
+      <span class="naver-mark">N</span>
+      부의 자유 카페
+    </a>
+  </div>
+</div>
+
+<div class="step-label">
+  <div class="step-line"></div>
+  <span class="step-text">STEP 01 / 시장 지표</span>
+</div>
+
 <!-- MACRO INDICATORS (4 in one block) -->
 <div class="card">
-  <div class="card-title">매크로 지표 (하루 1회 업데이트)</div>
+  <div class="card-title">매크로 지표 (하루 4회 자동 갱신)</div>
   <div class="card-subtitle">🔵 미국 그룹에 적용 · 🟡 한국 그룹에 적용</div>
   <div class="macro-grid">
     <div class="macro-item us">
@@ -835,11 +988,16 @@ body {
   </button>
 </div>
 
+<div class="step-label">
+  <div class="step-line"></div>
+  <span class="step-text">STEP 02 / 점수 가중치</span>
+</div>
+
 <!-- WEIGHT SETTINGS -->
 <div class="card" style="padding: 16px 20px;">
   <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleWeightPanel()">
     <div class="card-title" style="margin-bottom:0;">
-      🎛️ 점수 가중치 설정 <span id="weight-current" style="margin-left:8px;color:var(--text-dim);font-size:11px;font-weight:400;font-family:'JetBrains Mono',monospace;text-transform:none;letter-spacing:0;">(VIX 20% · F&G 30% · 종목지표 50%)</span>
+      🎛️ 점수 가중치 설정 <span id="weight-current" style="margin-left:8px;color:var(--text-dim);font-size:11px;font-weight:400;font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;text-transform:none;letter-spacing:0;">(VIX 20% · F&G 30% · 종목지표 50%)</span>
     </div>
     <span id="weight-toggle-icon" style="color:var(--text-dim);font-size:14px;">▼</span>
   </div>
@@ -886,6 +1044,11 @@ body {
   </div>
 </div>
 
+<div class="step-label">
+  <div class="step-line"></div>
+  <span class="step-text">기록 / HISTORY</span>
+</div>
+
 <!-- HISTORY SECTION -->
 <div class="history-section" id="history-section">
   <div class="history-header">
@@ -924,6 +1087,11 @@ body {
   </div>
 </div>
 
+<div class="step-label">
+  <div class="step-line"></div>
+  <span class="step-text">STEP 03 / 종목 등록</span>
+</div>
+
 <!-- ADD TICKER -->
 <div class="add-ticker-block">
   <div class="add-ticker-header">
@@ -940,6 +1108,11 @@ body {
     </div>
     <button class="btn" id="add-btn" disabled>+ 추가</button>
   </div>
+</div>
+
+<div class="step-label">
+  <div class="step-line"></div>
+  <span class="step-text">STEP 04 / 그룹별 판정</span>
 </div>
 
 <!-- GROUP: US -->
@@ -1047,6 +1220,11 @@ body {
   </div>
 </div>
 
+<div class="step-label">
+  <div class="step-line"></div>
+  <span class="step-text">STEP 05 / 매수·익절 가이드</span>
+</div>
+
 <!-- GUIDE -->
 <div class="card">
   <div class="card-title">9단계 매수/익절 가이드</div>
@@ -1074,48 +1252,48 @@ body {
             <td class="num mono">80</td>
             <td class="num mono">12</td>
             <td class="num mono">20</td>
-            <td class="num"><span class="score-pill" style="background:rgba(81,207,102,0.18);color:#51cf66;">96</span></td>
-            <td><span style="color:#51cf66;">🔥 극한공포 매수</span></td>
+            <td class="num"><span class="score-pill" style="background:rgba(47,90,58,0.16);color:#2F5A3A;">96</span></td>
+            <td><span style="color:#2F5A3A;">🔥 극한공포 매수</span></td>
           </tr>
           <tr>
             <td>2020 코로나 쇼크</td>
             <td class="num mono">75</td>
             <td class="num mono">5</td>
             <td class="num mono">15</td>
-            <td class="num"><span class="score-pill" style="background:rgba(81,207,102,0.18);color:#51cf66;">99</span></td>
-            <td><span style="color:#51cf66;">🔥 극한공포 매수</span></td>
+            <td class="num"><span class="score-pill" style="background:rgba(47,90,58,0.16);color:#2F5A3A;">99</span></td>
+            <td><span style="color:#2F5A3A;">🔥 극한공포 매수</span></td>
           </tr>
           <tr>
             <td>2022 금리인상</td>
             <td class="num mono">32</td>
             <td class="num mono">22</td>
             <td class="num mono">28</td>
-            <td class="num"><span class="score-pill" style="background:rgba(81,207,102,0.1);color:#8ce99a;">76</span></td>
-            <td><span style="color:#8ce99a;">🟢 매수</span></td>
+            <td class="num"><span class="score-pill" style="background:rgba(78,122,85,0.11);color:#4E7A55;">76</span></td>
+            <td><span style="color:#4E7A55;">🟢 매수</span></td>
           </tr>
           <tr>
             <td>평상시 (2024년 대부분)</td>
             <td class="num mono">17</td>
             <td class="num mono">55</td>
             <td class="num mono">55</td>
-            <td class="num"><span class="score-pill" style="background:rgba(244,196,48,0.1);color:#f4c430;">47</span></td>
-            <td><span style="color:#f4c430;">🟡 중립 관망</span></td>
+            <td class="num"><span class="score-pill" style="background:rgba(196,165,123,0.20);color:#8A6D3B;">47</span></td>
+            <td><span style="color:#8A6D3B;">🟡 중립 관망</span></td>
           </tr>
           <tr>
             <td>2024 AI 주식 열풍</td>
             <td class="num mono">13</td>
             <td class="num mono">75</td>
             <td class="num mono">72</td>
-            <td class="num"><span class="score-pill" style="background:rgba(255,107,107,0.1);color:#ff8787;">26</span></td>
-            <td><span style="color:#ff8787;">🔴 소량익절</span></td>
+            <td class="num"><span class="score-pill" style="background:rgba(217,84,43,0.11);color:#D9542B;">26</span></td>
+            <td><span style="color:#D9542B;">🔴 소량익절</span></td>
           </tr>
           <tr>
             <td>2021 밈주식 광풍</td>
             <td class="num mono">11</td>
             <td class="num mono">82</td>
             <td class="num mono">78</td>
-            <td class="num"><span class="score-pill" style="background:rgba(255,107,107,0.15);color:#ff6b6b;">15</span></td>
-            <td><span style="color:#ff6b6b;">🔴 강력익절</span></td>
+            <td class="num"><span class="score-pill" style="background:rgba(191,70,32,0.15);color:#BF4620;">15</span></td>
+            <td><span style="color:#BF4620;">🔴 강력익절</span></td>
           </tr>
         </tbody>
       </table>
@@ -1141,18 +1319,18 @@ body {
       <svg class="fg-gauge-svg" viewBox="0 0 200 120">
         <defs>
           <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#51cf66"/>
-            <stop offset="25%" stop-color="#a9e34b"/>
-            <stop offset="50%" stop-color="#f4c430"/>
-            <stop offset="75%" stop-color="#ff9f43"/>
-            <stop offset="100%" stop-color="#ff6b6b"/>
+            <stop offset="0%" stop-color="#3F6B4A"/>
+            <stop offset="25%" stop-color="#5A7C5A"/>
+            <stop offset="50%" stop-color="#C4A57B"/>
+            <stop offset="75%" stop-color="#B8813F"/>
+            <stop offset="100%" stop-color="#A03D1F"/>
           </linearGradient>
         </defs>
         <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round"/>
-        <line id="gauge-needle" x1="100" y1="100" x2="100" y2="30" stroke="#e8ecf0" stroke-width="3" stroke-linecap="round" transform="rotate(-90 100 100)" style="transition: transform 0.6s cubic-bezier(.4,1.5,.5,1);"/>
-        <circle cx="100" cy="100" r="6" fill="#e8ecf0"/>
-        <text x="20" y="118" font-size="10" fill="#8b98a8" font-family="JetBrains Mono">0 공포</text>
-        <text x="160" y="118" font-size="10" fill="#8b98a8" font-family="JetBrains Mono">탐욕 100</text>
+        <line id="gauge-needle" x1="100" y1="100" x2="100" y2="30" stroke="#3A2F26" stroke-width="3" stroke-linecap="round" transform="rotate(-90 100 100)" style="transition: transform 0.6s cubic-bezier(.4,1.5,.5,1);"/>
+        <circle cx="100" cy="100" r="6" fill="#3A2F26"/>
+        <text x="20" y="118" font-size="10" fill="#8B8276" font-weight="700">0 공포</text>
+        <text x="160" y="118" font-size="10" fill="#8B8276" font-weight="700">탐욕 100</text>
       </svg>
       <div class="fg-gauge-info">
         <div class="fg-gauge-value" id="ddokjae-value">--</div>
@@ -1186,6 +1364,37 @@ body {
   </div>
 </div>
 
+</div>
+
+<!-- KEY INSIGHT + 하단 CTA -->
+<div class="insight-box">
+  <div class="insight-label">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D9542B" stroke-width="2">
+      <path d="M12 3l1.9 5.8L20 10l-4.5 3.3L17 20l-5-3.5L7 20l1.5-6.7L4 10l6.1-1.2L12 3z"/>
+    </svg>
+    <span class="insight-label-text">KEY INSIGHT</span>
+  </div>
+  <h3 class="insight-title">물타기는 '얼마나 떨어졌나'가 아니라 '왜 떨어졌나'로 결정됩니다</h3>
+  <p class="insight-desc">
+    같은 −30%라도 시장 전체가 공포에 빠져 같이 밀린 것과, 그 종목만 혼자 무너지는 건 전혀 다른 상황입니다.
+    그래서 이 계산기는 점수를 <b>두 층</b>으로 나눕니다 — VIX·공포탐욕지수가 보는 <b>시장</b>,
+    그리고 10개 보조지표가 보는 <b>종목</b>.<br>
+    특히 <b>ADX가 25 이상이면서 DI−가 DI+보다 큰</b> 종목은 하락 추세가 아직 살아 있다는 뜻이라
+    과매도 신호가 여러 개 켜져도 점수를 깎습니다. 신호 개수만 보고 떨어지는 칼날을 잡으면 안 되니까요.
+    물타기 간격은 ATR(일평균 변동폭)을 기준으로 잡으시면 훨씬 덜 흔들립니다.
+  </p>
+
+  <div class="insight-cta">
+    <div class="insight-cta-text">📊 더 깊이 있는 인사이트가 궁금하다면?</div>
+    <a href="https://www.youtube.com/@ttok_jae" target="_blank" rel="noopener" class="cta-link primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      똑재TV 구독하기
+    </a>
+    <a href="https://cafe.naver.com/ttokjae" target="_blank" rel="noopener" class="cta-link secondary">
+      <span class="naver-mark">N</span>
+      부의 자유 카페 가입
+    </a>
+  </div>
 </div>
 
 <!-- 외부 링크 CTA 섹션 -->
@@ -1223,8 +1432,10 @@ body {
 <div class="footer">
   <div style="margin-bottom:10px;"><b>똑재</b> · 평생 월 300만원 현금흐름 만드는 포트폴리오 완성반</div>
   <div class="disclaimer">
-    본 계산기는 투자 참고 목적이며, 모든 투자 결정과 결과는 본인 책임입니다.
-    데이터는 Yahoo Finance/네이버증권/CNN에서 가져오며 15~20분 지연될 수 있습니다.
+    ※ 본 시뮬레이터는 세금·수수료를 제외한 단순 계산 도구입니다. 특정 종목의 매수·매도를 권유하지 않으며,
+    실제 투자 결과와 다를 수 있고 투자 판단의 책임은 본인에게 있습니다.<br>
+    보조지표는 전일 종가 기준으로 하루 한 번 계산되며, 현재가는 Yahoo Finance·네이버증권 기준으로
+    15~20분 지연될 수 있습니다.
   </div>
 </div>
 
@@ -1829,9 +2040,9 @@ function signalCell(t) {
   }
   const n = Number(ind.oversold_n || 0);
   const ob = Number(ind.overbought_n || 0);
-  const color = n >= 4 ? '#51cf66' : n >= 2 ? '#f4c430' : 'var(--text-mute)';
+  const color = n >= 4 ? '#3F6B4A' : n >= 2 ? '#B8813F' : 'var(--ink-mute)';
   const obTxt = ob > 0
-    ? `<span style="color:#ff8787;margin-left:4px;">과매수 ${ob}</span>` : '';
+    ? `<span style="color:#A03D1F;margin-left:4px;">과매수 ${ob}</span>` : '';
   return `<div style="font-weight:700;">${rsiTxt}</div>
           <div style="font-size:10px;cursor:pointer;" title="클릭하면 지표 전체를 봅니다"
                onclick="showIndicators(${t.id})">
@@ -1856,8 +2067,8 @@ function showIndicators(id) {
   const chip = (txt, on, good) => `
     <span style="display:inline-block;margin:3px 4px 0 0;padding:3px 9px;border-radius:999px;
       font-size:11px;font-weight:700;
-      background:${on ? (good ? 'rgba(81,207,102,.16)' : 'rgba(255,107,107,.14)') : 'var(--bg-elevated)'};
-      color:${on ? (good ? '#51cf66' : '#ff8787') : 'var(--text-mute)'};">${txt}</span>`;
+      background:${on ? (good ? 'rgba(63,107,74,.14)' : 'rgba(217,84,43,.12)') : 'var(--bg-alt)'};
+      color:${on ? (good ? '#3F6B4A' : '#A03D1F') : 'var(--ink-mute)'};">${txt}</span>`;
 
   const rows = [
     ['RSI (14)', fmt(ind.rsi), 'Wilder 방식 · 30 이하 과매도'],
@@ -2002,16 +2213,17 @@ function setupWeightSliders() {
   });
 }
 
+// 크림베이지 팔레트에 맞춘 warm 스펙트럼: 짙은 그린(공포·매수) → 베이지골드(중립) → 오렌지(탐욕·익절)
 const TIERS = [
-  { min: 90, max: 100, emoji: '🔥', label: '극한공포 매수', color: '#51cf66', bg: 'rgba(81, 207, 102, 0.18)', multiplier: 2.0 },
-  { min: 80, max: 89,  emoji: '🟢', label: '강력매수',     color: '#51cf66', bg: 'rgba(81, 207, 102, 0.14)', multiplier: 1.5 },
-  { min: 70, max: 79,  emoji: '🟢', label: '매수',         color: '#8ce99a', bg: 'rgba(81, 207, 102, 0.1)',  multiplier: 1.2 },
-  { min: 60, max: 69,  emoji: '🟢', label: '소량매수',     color: '#a9e34b', bg: 'rgba(169, 227, 75, 0.1)',  multiplier: 1.0 },
-  { min: 40, max: 59,  emoji: '🟡', label: '중립 관망',    color: '#f4c430', bg: 'rgba(244, 196, 48, 0.1)',  multiplier: 0.5 },
-  { min: 30, max: 39,  emoji: '🟠', label: '매수 보류',    color: '#ff9f43', bg: 'rgba(255, 159, 67, 0.1)',  multiplier: 0, sellPct: 0 },
-  { min: 20, max: 29,  emoji: '🔴', label: '소량익절',    color: '#ff8787', bg: 'rgba(255, 107, 107, 0.1)', multiplier: 0, sellPct: 0.1 },
-  { min: 10, max: 19,  emoji: '🔴', label: '강력익절',    color: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.15)', multiplier: 0, sellPct: 0.2 },
-  { min: 0,  max: 9,   emoji: '❄️', label: '극한탐욕 익절', color: '#fa5252', bg: 'rgba(250, 82, 82, 0.2)',   multiplier: 0, sellPct: 0.3 },
+  { min: 90, max: 100, emoji: '🔥', label: '극한공포 매수', color: '#2F5A3A', bg: 'rgba(47, 90, 58, 0.16)',   multiplier: 2.0 },
+  { min: 80, max: 89,  emoji: '🟢', label: '강력매수',      color: '#3F6B4A', bg: 'rgba(63, 107, 74, 0.14)',  multiplier: 1.5 },
+  { min: 70, max: 79,  emoji: '🟢', label: '매수',          color: '#4E7A55', bg: 'rgba(78, 122, 85, 0.11)',  multiplier: 1.2 },
+  { min: 60, max: 69,  emoji: '🟢', label: '소량매수',      color: '#6B8A5A', bg: 'rgba(107, 138, 90, 0.11)', multiplier: 1.0 },
+  { min: 40, max: 59,  emoji: '🟡', label: '중립 관망',     color: '#8A6D3B', bg: 'rgba(196, 165, 123, 0.20)', multiplier: 0.5 },
+  { min: 30, max: 39,  emoji: '🟠', label: '매수 보류',     color: '#B8813F', bg: 'rgba(184, 129, 63, 0.14)', multiplier: 0, sellPct: 0 },
+  { min: 20, max: 29,  emoji: '🔴', label: '소량익절',      color: '#D9542B', bg: 'rgba(217, 84, 43, 0.11)',  multiplier: 0, sellPct: 0.1 },
+  { min: 10, max: 19,  emoji: '🔴', label: '강력익절',      color: '#BF4620', bg: 'rgba(191, 70, 32, 0.15)',  multiplier: 0, sellPct: 0.2 },
+  { min: 0,  max: 9,   emoji: '❄️', label: '극한탐욕 익절', color: '#A03D1F', bg: 'rgba(160, 61, 31, 0.18)',  multiplier: 0, sellPct: 0.3 },
 ];
 function getTier(s) { if (s==null) return null; return TIERS.find(t => s>=t.min && s<=t.max); }
 
@@ -2415,7 +2627,7 @@ function showSnapshotDetail(id) {
   
   let html = `
     <div class="snapshot-detail">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;margin-bottom:14px;color:var(--text-dim);">
+      <div style="font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;font-size:13px;margin-bottom:14px;color:var(--text-dim);">
         📅 ${dateStr}
         <span class="history-type-badge ${snap.type}">${snap.type === 'auto' ? '🔄 자동' : '📸 수동'}</span>
       </div>
@@ -3009,9 +3221,9 @@ async function refreshAll() {
         if (gaugeEl) {
           gaugeEl.textContent = ttokjaeFG;
           const label = ttokjaeFG<=20?'극공포':ttokjaeFG<=40?'공포':ttokjaeFG<=60?'중립':ttokjaeFG<=80?'탐욕':'극탐욕';
-          const color = ttokjaeFG<=20?'var(--green)':ttokjaeFG<=40?'#a9e34b':ttokjaeFG<=60?'var(--gold)':ttokjaeFG<=80?'var(--orange)':'var(--red)';
+          const color = ttokjaeFG<=20?'#3F6B4A':ttokjaeFG<=40?'#5A7C5A':ttokjaeFG<=60?'#8A6D3B':ttokjaeFG<=80?'#B8813F':'#A03D1F';
           const statusEl = document.getElementById('ddokjae-status');
-          if (statusEl) { statusEl.textContent = label; statusEl.style.background = color; statusEl.style.color = '#0f1419'; }
+          if (statusEl) { statusEl.textContent = label; statusEl.style.background = color; statusEl.style.color = 'var(--white)'; }
           gaugeEl.style.color = color;
           const angle = (ttokjaeFG / 100) * 180 - 90;
           const needle = document.getElementById('gauge-needle');
@@ -3096,11 +3308,11 @@ function calculateTtokjaeFG() {
   // Update gauge
   document.getElementById('ddokjae-value').textContent = ttokjaeFG;
   const label = ttokjaeFG<=20?'극공포':ttokjaeFG<=40?'공포':ttokjaeFG<=60?'중립':ttokjaeFG<=80?'탐욕':'극탐욕';
-  const color = ttokjaeFG<=20?'var(--green)':ttokjaeFG<=40?'#a9e34b':ttokjaeFG<=60?'var(--gold)':ttokjaeFG<=80?'var(--orange)':'var(--red)';
+  const color = ttokjaeFG<=20?'#3F6B4A':ttokjaeFG<=40?'#5A7C5A':ttokjaeFG<=60?'#8A6D3B':ttokjaeFG<=80?'#B8813F':'#A03D1F';
   const statusEl = document.getElementById('ddokjae-status');
   statusEl.textContent = label;
   statusEl.style.background = color;
-  statusEl.style.color = '#0f1419';
+  statusEl.style.color = 'var(--white)';
   document.getElementById('ddokjae-value').style.color = color;
   const angle = (ttokjaeFG / 100) * 180 - 90;
   document.getElementById('gauge-needle').setAttribute('transform', `rotate(${angle} 100 100)`);
