@@ -4,7 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>똑재 하락장 물타기 계산기</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<!-- Pretendard 가변폰트 + 동적 서브셋.
+     static 버전은 weight 하나당 한글 전체가 담긴 770KB 파일을 통째로 받는다.
+     이 페이지는 500·600·700·800을 모두 쓰므로 그대로 두면 3MB가 넘는다.
+     동적 서브셋은 화면에 실제로 나온 글자 구간만 받고, weight 45~920이
+     한 파일에 들어 있어 굵기를 더 써도 추가 다운로드가 없다. (약 200~350KB) -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root {
   /* ── 똑재TV 디자인 시스템 (references/design-system.md) ── */
@@ -21,6 +28,11 @@
   --beige-gold: #C4A57B;
   --dark-warm: #3A2F26;      /* 다크 박스 */
   --dark-warm-soft: #5A4A3D;
+  /* 끝의 이모지 폰트 3종이 없으면 🔥🟢🟡 같은 글자가 두부(□)로 깨진다.
+     Pretendard 에는 이모지 글리프가 없어서 OS 이모지 폰트로 넘겨줘야 한다. */
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+               system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif,
+               'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
 
   /* ── 기존 클래스가 참조하던 이름들을 위 팔레트로 잇는다 ──
      클래스를 전부 갈아엎지 않고도 톤이 한 번에 바뀌도록 별칭으로 둔 것. */
@@ -45,12 +57,12 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   background: var(--bg); color: var(--ink);
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   font-weight: 500; min-height: 100vh;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
-.mono { font-family: 'Pretendard', -apple-system, sans-serif; font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
 .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
 
 /* HEADER */
@@ -125,7 +137,7 @@ body {
 }
 .card-title {
   font-size: 13px; font-weight: 800; color: var(--accent);
-  text-transform: uppercase; letter-spacing: 1.2px;
+  text-transform: uppercase; letter-spacing: 0.2px;
   margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
 }
 
@@ -139,8 +151,9 @@ body {
 .step-line { width: 28px; height: 2px; background: var(--accent); flex-shrink: 0; }
 .step-text {
   font-size: 12px; font-weight: 800;
-  letter-spacing: 1.5px; color: var(--accent);
+  letter-spacing: 0; color: var(--accent);   /* 한글은 자간을 벌리지 않는다 */
 }
+.step-en { letter-spacing: 1.5px; }          /* 영문·숫자 부분만 라벨 자간 */
 
 /* 카테고리 태그 */
 .tag {
@@ -268,16 +281,16 @@ body {
 .macro-label .source {
   font-size: 10px; color: var(--text-mute);
   padding: 2px 6px; background: var(--bg); border-radius: 4px;
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .macro-input-row { display: flex; align-items: baseline; gap: 8px; }
 .macro-input {
   background: transparent; border: none; color: var(--text);
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 24px;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-size: 24px;
   font-weight: 600; width: 100%; outline: none;
 }
-.macro-range { font-size: 10px; color: var(--text-mute); font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.macro-range { font-size: 10px; color: var(--text-mute); font-family: var(--font-sans); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .macro-interpret { margin-top: 8px; font-size: 11px; color: var(--text-dim); min-height: 22px; }
 .status-badge {
   display: inline-block; padding: 3px 10px; border-radius: 12px;
@@ -353,7 +366,7 @@ body {
   margin-bottom: 10px;
 }
 .weight-value {
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums;
   font-size: 14px; font-weight: 700;
   color: var(--mint); min-width: 40px; text-align: right;
 }
@@ -392,7 +405,7 @@ body {
 }
 .history-count {
   font-size: 11px; color: var(--text-mute);
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums;
   padding: 3px 8px; background: var(--bg); border-radius: 6px;
 }
 .history-actions {
@@ -439,7 +452,7 @@ body {
   background: rgba(139,111,71,0.06);
 }
 .history-date {
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--text);
   white-space: nowrap;
@@ -460,7 +473,7 @@ body {
 }
 .history-summary .macro-tag {
   display: inline-block; padding: 1px 6px; border-radius: 4px;
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 10px;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-size: 10px;
   margin-right: 4px; background: var(--bg-elevated);
 }
 .history-note {
@@ -526,7 +539,7 @@ body {
   font-size: 10px; color: var(--text-mute);
 }
 .snapshot-macros .val {
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums;
   font-size: 18px; font-weight: 600;
 }
 
@@ -561,7 +574,7 @@ body {
 .ticker-input {
   width: 100%; background: var(--bg); border: 1px solid var(--border);
   border-radius: 8px; padding: 12px 14px; color: var(--text);
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 14px; outline: none;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-size: 14px; outline: none;
   transition: border-color 0.15s;
 }
 .ticker-input:focus { border-color: var(--mint); }
@@ -594,7 +607,7 @@ body {
 .autocomplete-item:last-child { border-bottom: none; }
 .autocomplete-item:hover, .autocomplete-item.highlighted { background: var(--mint-soft); }
 .autocomplete-item .ticker {
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--mint); font-size: 13px;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--mint); font-size: 13px;
 }
 .autocomplete-item .name { font-size: 12px; color: var(--text); flex: 1; margin: 0 10px; }
 .autocomplete-item .exch { font-size: 10px; color: var(--text-mute); }
@@ -602,7 +615,7 @@ body {
 .holdings-input {
   background: var(--bg); border: 1px solid var(--border);
   border-radius: 8px; padding: 12px 14px; color: var(--text);
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 14px; outline: none; text-align: right;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-size: 14px; outline: none; text-align: right;
 }
 .btn {
   background: var(--accent); color: var(--white); border: none;
@@ -644,14 +657,14 @@ body {
 .group-badge {
   display: inline-block; padding: 3px 10px; border-radius: 6px;
   font-size: 11px; font-weight: 600;
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums;
 }
 .group.us .group-badge { background: rgba(74,107,138,0.13); color: var(--us-color); }
 .group.intl .group-badge { background: rgba(139,111,71,0.15); color: var(--intl-color); }
 .group.kr .group-badge { background: rgba(184,129,63,0.15); color: var(--kr-color); }
 .group-indicator {
   font-size: 11px; color: var(--text-mute);
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums;
 }
 .group-indicator strong { color: var(--text-dim); }
 
@@ -680,10 +693,10 @@ body {
 .ticker-table tr.draggable:active { cursor: grabbing; }
 .ticker-table tr.dragging { opacity: 0.3; }
 
-.ticker-table .num { font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.ticker-table .num { font-family: var(--font-sans); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .ticker-table .name { font-weight: 500; }
 .ticker-table .ticker-code {
-  color: var(--text-mute); font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 11px;
+  color: var(--text-mute); font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-size: 11px;
 }
 .drag-handle {
   color: var(--text-mute); cursor: grab; padding: 0 4px;
@@ -693,20 +706,20 @@ body {
 
 .pct-badge {
   display: inline-block; padding: 2px 6px; border-radius: 4px;
-  font-size: 10px; font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; margin-left: 4px;
+  font-size: 10px; font-family: var(--font-sans); font-variant-numeric: tabular-nums; margin-left: 4px;
 }
 .pct-up { background: var(--red-soft); color: var(--red); }
 .pct-down { background: var(--green-soft); color: var(--green); }
 .score-pill {
   display: inline-block; padding: 4px 10px; border-radius: 6px;
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-weight: 800;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-weight: 800;
   font-size: 12px; min-width: 44px; text-align: center;
 }
 .signal-badge {
   display: inline-block; padding: 5px 10px; border-radius: 999px;
   font-size: 11px; font-weight: 700; white-space: nowrap;
 }
-.action-amount { font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; }
+.action-amount { font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; }
 
 .empty-state { text-align: center; padding: 32px 20px; color: var(--text-mute); }
 .empty-state .icon { font-size: 32px; margin-bottom: 8px; opacity: 0.5; }
@@ -745,7 +758,7 @@ body {
 .fg-gauge-svg { width: 220px; height: auto; }
 .fg-gauge-info { flex: 1; min-width: 150px; }
 .fg-gauge-value {
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 48px;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-size: 48px;
   font-weight: 600; letter-spacing: -2px;
 }
 .fg-gauge-status {
@@ -771,7 +784,7 @@ body {
 }
 .guide-card h4 { font-size: 13px; margin-bottom: 4px; }
 .guide-card .range {
-  font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums; font-size: 10px;
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-size: 10px;
   color: var(--text-mute); margin-top: 4px; margin-bottom: 6px;
 }
 .guide-card p { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
@@ -925,7 +938,7 @@ body {
 
 <div class="step-label">
   <div class="step-line"></div>
-  <span class="step-text">STEP 01 / 시장 지표</span>
+  <span class="step-text"><span class="step-en">STEP 01</span> / 시장 지표</span>
 </div>
 
 <!-- MACRO INDICATORS (4 in one block) -->
@@ -990,14 +1003,14 @@ body {
 
 <div class="step-label">
   <div class="step-line"></div>
-  <span class="step-text">STEP 02 / 점수 가중치</span>
+  <span class="step-text"><span class="step-en">STEP 02</span> / 점수 가중치</span>
 </div>
 
 <!-- WEIGHT SETTINGS -->
 <div class="card" style="padding: 16px 20px;">
   <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleWeightPanel()">
     <div class="card-title" style="margin-bottom:0;">
-      🎛️ 점수 가중치 설정 <span id="weight-current" style="margin-left:8px;color:var(--text-dim);font-size:11px;font-weight:400;font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;text-transform:none;letter-spacing:0;">(VIX 20% · F&G 30% · 종목지표 50%)</span>
+      🎛️ 점수 가중치 설정 <span id="weight-current" style="margin-left:8px;color:var(--text-dim);font-size:11px;font-weight:400;font-family: var(--font-sans); font-variant-numeric: tabular-nums;text-transform:none;letter-spacing:0;">(VIX 20% · F&G 30% · 종목지표 50%)</span>
     </div>
     <span id="weight-toggle-icon" style="color:var(--text-dim);font-size:14px;">▼</span>
   </div>
@@ -1046,7 +1059,7 @@ body {
 
 <div class="step-label">
   <div class="step-line"></div>
-  <span class="step-text">기록 / HISTORY</span>
+  <span class="step-text">기록 <span class="step-en">/ HISTORY</span></span>
 </div>
 
 <!-- HISTORY SECTION -->
@@ -1089,7 +1102,7 @@ body {
 
 <div class="step-label">
   <div class="step-line"></div>
-  <span class="step-text">STEP 03 / 종목 등록</span>
+  <span class="step-text"><span class="step-en">STEP 03</span> / 종목 등록</span>
 </div>
 
 <!-- ADD TICKER -->
@@ -1112,7 +1125,7 @@ body {
 
 <div class="step-label">
   <div class="step-line"></div>
-  <span class="step-text">STEP 04 / 그룹별 판정</span>
+  <span class="step-text"><span class="step-en">STEP 04</span> / 그룹별 판정</span>
 </div>
 
 <!-- GROUP: US -->
@@ -1222,7 +1235,7 @@ body {
 
 <div class="step-label">
   <div class="step-line"></div>
-  <span class="step-text">STEP 05 / 매수·익절 가이드</span>
+  <span class="step-text"><span class="step-en">STEP 05</span> / 매수·익절 가이드</span>
 </div>
 
 <!-- GUIDE -->
@@ -2627,7 +2640,7 @@ function showSnapshotDetail(id) {
   
   let html = `
     <div class="snapshot-detail">
-      <div style="font-family: 'Pretendard', sans-serif; font-variant-numeric: tabular-nums;font-size:13px;margin-bottom:14px;color:var(--text-dim);">
+      <div style="font-family: var(--font-sans); font-variant-numeric: tabular-nums;font-size:13px;margin-bottom:14px;color:var(--text-dim);">
         📅 ${dateStr}
         <span class="history-type-badge ${snap.type}">${snap.type === 'auto' ? '🔄 자동' : '📸 수동'}</span>
       </div>
