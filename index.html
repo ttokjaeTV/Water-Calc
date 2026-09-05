@@ -225,6 +225,35 @@ body {
   font-size: 10px; font-weight: 800; line-height: 1;
 }
 
+/* ── 시장 참고 지표 타일 ────────────────────────────
+   점수에는 안 들어가지만 국면을 읽는 데 쓰는 값들.
+   19개를 수집해 놓고 4개만 보여주던 걸 여기로 끌어냈다. */
+.macro-extra { margin-top: 20px; }
+.mx-group { margin-bottom: 14px; }
+.mx-title {
+  font-size: 11px; font-weight: 800; letter-spacing: .8px;
+  color: var(--ink-mute); margin-bottom: 7px;
+}
+.mx-grid {
+  display: grid; gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+}
+.mx-tile {
+  background: var(--bg-alt); border: 1px solid var(--border);
+  border-radius: 11px; padding: 9px 11px;
+}
+.mx-label { font-size: 10.5px; font-weight: 700; color: var(--ink-mute); }
+.mx-value {
+  font-size: 17px; font-weight: 800; letter-spacing: -.3px;
+  font-variant-numeric: tabular-nums; margin-top: 2px;
+}
+.mx-sub { font-size: 10px; font-weight: 700; margin-top: 1px; }
+.mx-up   { color: #A03D1F; }
+.mx-down { color: #3F6B4A; }
+.mx-flat { color: var(--ink-mute); }
+.mx-note { font-size: 9.5px; color: var(--ink-mute); margin-top: 2px; font-weight: 600; }
+.mx-foot { font-size: 11px; color: var(--ink-mute); margin-top: 6px; line-height: 1.6; }
+
 /* ── 접이식 설명 (details/summary) ──────────────────
    기본은 접혀 있다. 처음 보는 사람에게는 필요하고
    매일 쓰는 사람에게는 방해가 되기 때문이다. */
@@ -1147,12 +1176,35 @@ body {
         국내 그룹에는 VKOSPI + 똑재 지수가 적용됩니다.</p>
       </div>
 
+      <div class="explain-item">
+        <div class="explain-h">아래 '시장 참고 지표'는 무엇인가</div>
+        <p>점수에 직접 들어가지는 않지만, 지금이 어떤 국면인지 읽는 데 쓰는 값들입니다.
+        위의 네 지표만으로는 <b>왜</b> 시장이 그런 상태인지 알 수 없어서 함께 받아둡니다.</p>
+        <ul class="explain-list">
+          <li><b>미 국채 10년물</b> — 세계 자산가격의 기준선. 오르면 주식 밸류에이션에 부담</li>
+          <li><b>장단기 금리차(10년−2년)</b> — 마이너스(역전)면 역사적으로 경기침체 선행 신호로 읽혀 왔습니다.
+            FRED가 막히면 <b>10년물 − 13주</b>로 근사하며, 그 경우 화면에 '근사'라고 표시됩니다</li>
+          <li><b>신용 스프레드(HYG/LQD)</b> — 하이일드 대비 투자등급 채권의 상대강도.
+            떨어질수록 위험자산 기피가 커지는 방향입니다. VIX보다 먼저 움직일 때가 있습니다</li>
+          <li><b>달러인덱스</b> — 달러 강세는 대체로 신흥국·원자재에 역풍</li>
+          <li><b>원/달러</b> — 국내 투자자의 해외자산 환산에 직결</li>
+          <li><b>금 · WTI</b> — 안전자산 선호와 인플레 압력을 각각 읽는 창</li>
+          <li><b>외국인 순매수</b> — 최근 5영업일 합계. 국내 수급의 방향</li>
+          <li><b>52주 신고가 비율</b> — 오르는 종목이 넓은지 좁은지(시장 폭)</li>
+        </ul>
+        <p class="explain-note">이 값들은 <b>판단의 재료</b>이지 점수가 아닙니다.
+        점수에 넣지 않은 이유는, 넣는 순간 무엇이 얼마나 기여했는지 설명하기 어려워지고
+        가중치를 손볼 때마다 결과가 요동치기 때문입니다.</p>
+      </div>
+
       <p class="explain-foot">
         매크로는 하루 4회(한국시간 07·10·16·22시) 자동 갱신됩니다.
         값을 직접 넣고 싶으면 입력칸에 타이핑하면 되고, 🔄를 누르면 다시 받아옵니다.
       </p>
     </div>
   </details>
+
+  <div class="macro-extra" id="macro-extra"></div>
 </div>
 
 <div class="step-label">
@@ -2313,6 +2365,109 @@ const AXES = [
   ['ax_reversal',   '반등',   '#5A7C5A', 'MACD 히스토그램 전환·볼린저 %B 회복'],
   ['ax_trend_risk', '위험',   '#A03D1F', 'ADX/DI·데드크로스·연속하락·60일 모멘텀 (높을수록 나쁨)'],
 ];
+
+// ============================================================
+// 시장 참고 지표 렌더링
+// ------------------------------------------------------------
+// macro.json 에는 19개가 들어 있는데 화면에는 점수용 4개만 나오고 있었다.
+// 나머지를 여기서 타일로 펼친다. 점수에는 넣지 않는다 — 국면을 읽는 재료다.
+// ============================================================
+
+const MX_GROUPS = [
+  ['금리', [
+    ['ust10y',     '미 10년물',    v => v.toFixed(2) + '%',  '오르면 주식에 부담'],
+    ['ust13w',     '미 13주',      v => v.toFixed(2) + '%',  '단기 정책금리 대용'],
+    ['ust30y',     '미 30년물',    v => v.toFixed(2) + '%',  '장기 기대'],
+    ['yieldCurve', '장단기 금리차', v => v.toFixed(2) + '%p', '마이너스면 역전'],
+  ]],
+  ['환율·달러', [
+    ['dxy',    '달러인덱스', v => v.toFixed(2),                    '강세면 신흥국 역풍'],
+    ['usdkrw', '원/달러',    v => '₩' + Math.round(v).toLocaleString(), ''],
+  ]],
+  ['주요 지수', [
+    ['sp500',  'S&P500', v => Math.round(v).toLocaleString(), ''],
+    ['nasdaq', '나스닥',  v => Math.round(v).toLocaleString(), ''],
+    ['kospi',  '코스피',  v => Math.round(v).toLocaleString(), ''],
+    ['kosdaq', '코스닥',  v => v.toFixed(1),                   ''],
+  ]],
+  ['원자재', [
+    ['gold', '금',  v => '$' + Math.round(v).toLocaleString(), '안전자산 선호'],
+    ['wti',  'WTI', v => '$' + v.toFixed(1),                   '인플레 압력'],
+  ]],
+];
+
+function renderMacroExtra() {
+  const el = document.getElementById('macro-extra');
+  if (!el) return;
+  const m = DS.macro;
+  if (!m) { el.innerHTML = ''; return; }
+
+  const tile = (label, value, sub, note) => `
+    <div class="mx-tile">
+      <div class="mx-label">${label}</div>
+      <div class="mx-value">${value}</div>
+      ${sub || ''}
+      ${note ? `<div class="mx-note">${note}</div>` : ''}
+    </div>`;
+
+  const delta = (cur, prev) => {
+    if (prev == null || cur == null || !prev) return '';
+    const d = cur - prev, p = d / Math.abs(prev) * 100;
+    const cls = Math.abs(p) < 0.01 ? 'mx-flat' : (d > 0 ? 'mx-up' : 'mx-down');
+    const arrow = Math.abs(p) < 0.01 ? '–' : (d > 0 ? '▲' : '▼');
+    return `<div class="mx-sub ${cls}">${arrow} ${Math.abs(p).toFixed(2)}%</div>`;
+  };
+
+  let html = '';
+  for (const [gname, items] of MX_GROUPS) {
+    const tiles = items.map(([key, label, fmt, note]) => {
+      const o = m[key];
+      if (!o || o.value == null) return '';
+      let extraNote = note;
+      // 장단기 금리차가 FRED 대신 근사치일 때는 반드시 밝힌다.
+      if (key === 'yieldCurve' && m.yieldCurveSource &&
+          String(m.yieldCurveSource).includes('근사')) {
+        extraNote = '근사 (10년물−13주)';
+      }
+      return tile(label, fmt(Number(o.value)), delta(o.value, o.prev), extraNote);
+    }).filter(Boolean).join('');
+    if (tiles) html += `<div class="mx-group"><div class="mx-title">${gname}</div>
+                          <div class="mx-grid">${tiles}</div></div>`;
+  }
+
+  // 국내 수급·시장 폭·신용 — 형태가 달라 따로 만든다.
+  const extra = [];
+  if (m.foreignNetBuy && m.foreignNetBuy.value != null) {
+    const v = m.foreignNetBuy.value;
+    extra.push(tile('외국인 순매수',
+      `${v > 0 ? '+' : ''}${v.toFixed(2)}조`,
+      `<div class="mx-sub ${v >= 0 ? 'mx-down' : 'mx-up'}">${v >= 0 ? '순매수' : '순매도'}</div>`,
+      '5영업일 · 코스피+코스닥'));
+  }
+  if (m.highLowRatio && m.highLowRatio.value != null) {
+    const h = m.highLowRatio;
+    extra.push(tile('52주 신고가 비율', h.value.toFixed(0) + '%', '',
+      `신고가 ${h.high} / 신저가 ${h.low}`));
+  }
+  if (m.creditSpread && m.creditSpread.ratio != null) {
+    const c = m.creditSpread;
+    extra.push(tile('신용 스프레드', c.ratio.toFixed(3),
+      `<div class="mx-sub ${c.vs60d >= 0 ? 'mx-down' : 'mx-up'}">60일 평균 대비 ${c.vs60d > 0 ? '+' : ''}${c.vs60d}%</div>`,
+      'HYG/LQD 상대강도'));
+  }
+  if (extra.length) {
+    html += `<div class="mx-group"><div class="mx-title">국내 수급 · 시장 폭 · 신용</div>
+               <div class="mx-grid">${extra.join('')}</div></div>`;
+  }
+
+  const errs = (m.errors || []).map(e => e.source);
+  html += `<div class="mx-foot">
+      점수에는 들어가지 않는 참고 지표입니다. 갱신 ${(m.updated || '').replace('T', ' ').replace('Z', ' UTC')}
+      ${errs.length ? `<br>수집 실패: ${errs.join(', ')} — 해당 값은 표시되지 않습니다.` : ''}
+    </div>`;
+
+  el.innerHTML = html;
+}
 
 // 표의 '지표' 칸 — 축별 점수를 작은 막대로 바로 보여준다.
 // 클릭해서 모달을 열어야만 보이면 지표를 늘린 의미가 없다.
@@ -3502,6 +3657,7 @@ async function autoLoadMacrosOnEntry() {
   try {
     // 1. 매크로 지표 (VIX, CNN F&G, VKOSPI) - 백그라운드로
     const macros = await apiCall('/api/macros').catch(() => null);
+    renderMacroExtra();   // 점수에 안 들어가는 참고 지표 타일
     if (macros) {
       if (macros.vix) { 
         state.vix = macros.vix.value; 
@@ -3863,6 +4019,8 @@ renderGroups();
 setTimeout(() => {
   autoLoadMacrosOnEntry();
 }, 500);
+// 참고 지표는 매크로 응답을 기다리지 않고 데이터가 오는 대로 그린다.
+DS.init().then(renderMacroExtra).catch(() => {});
 </script>
 </body>
 </html>
