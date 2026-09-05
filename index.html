@@ -258,7 +258,7 @@ body {
    기본은 접혀 있다. 처음 보는 사람에게는 필요하고
    매일 쓰는 사람에게는 방해가 되기 때문이다. */
 .explain {
-  margin-top: 18px;
+  margin-top: 10px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--bg-alt);
@@ -1042,12 +1042,12 @@ body {
 <!-- MACRO INDICATORS (4 in one block) -->
 <div class="card">
   <div class="card-title">매크로 지표 (하루 4회 자동 갱신)</div>
-  <div class="card-subtitle">🔵 미국 그룹에 적용 · 🟡 한국 그룹에 적용</div>
+  <div class="card-subtitle">앞의 둘은 미국 그룹, 뒤의 둘은 국내 그룹에 적용됩니다</div>
   <div class="macro-grid">
     <div class="macro-item us">
-      <button class="refresh-btn" data-refresh="vix">🔄</button>
+      <button class="refresh-btn" data-refresh="vix" title="다시 받아오기">↻</button>
       <div class="macro-label">
-        <span>🔵 VIX (미국 변동성)</span>
+        <span>VIX · 미국 변동성</span>
         <span class="source">CBOE</span>
       </div>
       <div class="macro-input-row">
@@ -1057,9 +1057,9 @@ body {
       <div class="macro-interpret" id="vix-interpret"></div>
     </div>
     <div class="macro-item us">
-      <button class="refresh-btn" data-refresh="cnn-fg">🔄</button>
+      <button class="refresh-btn" data-refresh="cnn-fg" title="다시 받아오기">↻</button>
       <div class="macro-label">
-        <span>🔵 CNN 공포탐욕지수</span>
+        <span>CNN 공포탐욕지수</span>
         <span class="source">CNN</span>
       </div>
       <div class="macro-input-row">
@@ -1069,9 +1069,9 @@ body {
       <div class="macro-interpret" id="cnn-fg-interpret"></div>
     </div>
     <div class="macro-item kr">
-      <button class="refresh-btn" data-refresh="vkospi">🔄</button>
+      <button class="refresh-btn" data-refresh="vkospi" title="다시 받아오기">↻</button>
       <div class="macro-label">
-        <span>🟡 VKOSPI (코스피200 변동성)</span>
+        <span>VKOSPI · 코스피200 변동성</span>
         <span class="source">KRX</span>
       </div>
       <div class="macro-input-row">
@@ -1081,9 +1081,9 @@ body {
       <div class="macro-interpret" id="vkospi-interpret"></div>
     </div>
     <div class="macro-item kr">
-      <button class="refresh-btn" data-refresh="ttokjae-fg">🔄</button>
+      <button class="refresh-btn" data-refresh="ttokjae-fg" title="다시 받아오기">↻</button>
       <div class="macro-label">
-        <span>🟡 똑재 공포탐욕지수</span>
+        <span>똑재 공포탐욕지수</span>
         <span class="source">자체 산출</span>
       </div>
       <div class="macro-input-row">
@@ -1095,7 +1095,7 @@ body {
     </div>
   </div>
   <button class="auto-refresh-all" id="refresh-all-btn">
-    <span>⚡ 전체 자동 업데이트 (매크로 + 똑재 F&G + 모든 종목)</span>
+    <span>전체 자동 업데이트</span>
   </button>
 
   <details class="explain">
@@ -1199,122 +1199,28 @@ body {
 
       <p class="explain-foot">
         매크로는 하루 4회(한국시간 07·10·16·22시) 자동 갱신됩니다.
-        값을 직접 넣고 싶으면 입력칸에 타이핑하면 되고, 🔄를 누르면 다시 받아옵니다.
+        값을 직접 넣고 싶으면 입력칸에 타이핑하면 되고, ↻ 를 누르면 다시 받아옵니다.
       </p>
     </div>
   </details>
 
-  <div class="macro-extra" id="macro-extra"></div>
+  <details class="explain">
+    <summary>금리·환율·지수 등 시장 참고 지표 <span class="explain-more">펼쳐보기</span></summary>
+    <div class="explain-body">
+      <div class="macro-extra" id="macro-extra"></div>
+    </div>
+  </details>
 </div>
 
 <div class="step-label">
   <div class="step-line"></div>
-  <span class="step-text"><span class="step-en">STEP 02</span> / 점수 가중치</span>
-</div>
-
-<!-- WEIGHT SETTINGS -->
-<div class="card" style="padding: 16px 20px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleWeightPanel()">
-    <div class="card-title" style="margin-bottom:0;">
-      🎛️ 점수 가중치 설정 <span id="weight-current" style="margin-left:8px;color:var(--text-dim);font-size:11px;font-weight:400;font-family: var(--font-sans); font-variant-numeric: tabular-nums;text-transform:none;letter-spacing:0;">(VIX 20% · F&G 30% · 종목지표 50%)</span>
-    </div>
-    <span id="weight-toggle-icon" style="color:var(--text-dim);font-size:14px;">▼</span>
-  </div>
-  
-  <div id="weight-panel" style="display:none;margin-top:16px;">
-    <div class="card-subtitle" style="margin-top:0;">사용자 취향에 맞게 각 지표의 중요도를 조절하세요. 합계가 자동 정규화됩니다.</div>
-    
-    <div class="weight-grid">
-      <div class="weight-item">
-        <div class="weight-label">
-          <span>📊 VIX (변동성)</span>
-          <span class="weight-value" id="weight-vix-value">20%</span>
-        </div>
-        <input type="range" class="weight-slider" id="weight-vix" min="0" max="100" value="20">
-      </div>
-      <div class="weight-item">
-        <div class="weight-label">
-          <span>😱 공포탐욕지수</span>
-          <span class="weight-value" id="weight-fg-value">30%</span>
-        </div>
-        <input type="range" class="weight-slider" id="weight-fg" min="0" max="100" value="30">
-      </div>
-      <div class="weight-item">
-        <div class="weight-label">
-          <span>📈 종목 보조지표</span>
-          <span class="weight-value" id="weight-rsi-value">50%</span>
-        </div>
-        <input type="range" class="weight-slider" id="weight-rsi" min="0" max="100" value="50">
-      </div>
-    </div>
-    
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px;">
-      <div style="font-size:12px;color:var(--text-dim);">
-        <span>합계: </span><b id="weight-sum" style="color:var(--mint);">100%</b>
-        <span style="margin-left:12px;color:var(--text-mute);">정규화되어 적용됨</span>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn-ghost btn" onclick="applyWeightPreset(20,30,50)" style="padding:6px 12px;font-size:11px;">🎯 기본 (20/30/50)</button>
-        <button class="btn-ghost btn" onclick="applyWeightPreset(30,40,30)" style="padding:6px 12px;font-size:11px;">🌊 매크로</button>
-        <button class="btn-ghost btn" onclick="applyWeightPreset(10,20,70)" style="padding:6px 12px;font-size:11px;">📈 종목</button>
-        <button class="btn-ghost btn" onclick="applyWeightPreset(33,33,34)" style="padding:6px 12px;font-size:11px;">⚖️ 균형</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="step-label">
-  <div class="step-line"></div>
-  <span class="step-text">기록 <span class="step-en">/ HISTORY</span></span>
-</div>
-
-<!-- HISTORY SECTION -->
-<div class="history-section" id="history-section">
-  <div class="history-header">
-    <div class="history-title">
-      <span>📚 포트폴리오 히스토리</span>
-      <span class="history-count" id="history-count">0개 저장됨</span>
-    </div>
-    <div class="history-actions">
-      <button class="btn-ghost btn" id="save-snapshot-btn" title="현재 상태를 수동으로 저장">
-        📸 지금 저장
-      </button>
-      <button class="btn-ghost btn" id="compare-mode-btn" title="두 시점 비교">
-        🔀 비교
-      </button>
-      <button class="btn-ghost btn" id="export-csv-btn" title="CSV 파일로 다운로드">
-        📥 내보내기
-      </button>
-      <button class="btn-ghost btn" id="import-csv-btn" title="CSV 파일에서 히스토리 복원">
-        📤 가져오기
-      </button>
-      <input type="file" id="import-csv-file" accept=".csv" style="display:none;" />
-      <button class="btn-ghost btn" id="clear-history-btn" title="전체 기록 삭제" style="color:var(--red);">
-        🗑️
-      </button>
-    </div>
-  </div>
-  
-  <div class="compare-banner" id="compare-banner"></div>
-  
-  <div class="history-empty" id="history-empty">
-    아직 저장된 스냅샷이 없어요. 종목을 추가한 후 <b>⚡ 전체 자동 업데이트</b> 버튼을 누르면 자동 저장됩니다.
-  </div>
-  
-  <div class="history-timeline" id="history-timeline" style="display:none;">
-    <!-- 타임라인이 JS로 렌더링됨 -->
-  </div>
-</div>
-
-<div class="step-label">
-  <div class="step-line"></div>
-  <span class="step-text"><span class="step-en">STEP 03</span> / 종목 등록</span>
+  <span class="step-text"><span class="step-en">STEP 02</span> / 종목 등록</span>
 </div>
 
 <!-- ADD TICKER -->
 <div class="add-ticker-block">
   <div class="add-ticker-header">
-    <span>📌 종목 추가: 티커/코드/종목명 모두 검색 가능 → 자동 분류</span>
+    <span>종목 추가: 티커/코드/종목명 모두 검색 가능 → 자동 분류</span>
     <span style="font-size:11px;color:var(--text-mute);">드래그로 그룹 이동 가능</span>
   </div>
   <div class="add-ticker-row">
@@ -1331,7 +1237,7 @@ body {
 
 <div class="step-label">
   <div class="step-line"></div>
-  <span class="step-text"><span class="step-en">STEP 04</span> / 그룹별 판정</span>
+  <span class="step-text"><span class="step-en">STEP 03</span> / 그룹별 판정</span>
 </div>
 
 <!-- GROUP: US -->
@@ -1363,7 +1269,7 @@ body {
     </table>
   </div>
   <div class="empty-state" id="empty-us">
-    <div class="icon">📈</div>
+    <div class="icon">🇺🇸</div>
     <div>미국 종목이 없어요</div>
     <div class="hint">VOO, QQQ, AAPL 등을 추가해보세요</div>
   </div>
@@ -1436,6 +1342,62 @@ body {
     <div class="icon">🇰🇷</div>
     <div>한국 종목이 없어요</div>
     <div class="hint">삼성전자(005930), KODEX 200(069500) 등</div>
+  </div>
+</div>
+
+<div class="step-label">
+  <div class="step-line"></div>
+  <span class="step-text"><span class="step-en">STEP 04</span> / 점수 가중치</span>
+</div>
+
+<!-- WEIGHT SETTINGS -->
+<div class="card" style="padding: 16px 20px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleWeightPanel()">
+    <div class="card-title" style="margin-bottom:0;">
+      점수 가중치 설정 <span id="weight-current" style="margin-left:8px;color:var(--text-dim);font-size:11px;font-weight:400;font-family: var(--font-sans); font-variant-numeric: tabular-nums;text-transform:none;letter-spacing:0;">(VIX 20% · F&G 30% · 종목지표 50%)</span>
+    </div>
+    <span id="weight-toggle-icon" style="color:var(--text-dim);font-size:14px;">▼</span>
+  </div>
+  
+  <div id="weight-panel" style="display:none;margin-top:16px;">
+    <div class="card-subtitle" style="margin-top:0;">사용자 취향에 맞게 각 지표의 중요도를 조절하세요. 합계가 자동 정규화됩니다.</div>
+    
+    <div class="weight-grid">
+      <div class="weight-item">
+        <div class="weight-label">
+          <span>시장 변동성</span>
+          <span class="weight-value" id="weight-vix-value">20%</span>
+        </div>
+        <input type="range" class="weight-slider" id="weight-vix" min="0" max="100" value="20">
+      </div>
+      <div class="weight-item">
+        <div class="weight-label">
+          <span>시장 심리</span>
+          <span class="weight-value" id="weight-fg-value">30%</span>
+        </div>
+        <input type="range" class="weight-slider" id="weight-fg" min="0" max="100" value="30">
+      </div>
+      <div class="weight-item">
+        <div class="weight-label">
+          <span>종목 보조지표</span>
+          <span class="weight-value" id="weight-rsi-value">50%</span>
+        </div>
+        <input type="range" class="weight-slider" id="weight-rsi" min="0" max="100" value="50">
+      </div>
+    </div>
+    
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px;">
+      <div style="font-size:12px;color:var(--text-dim);">
+        <span>합계: </span><b id="weight-sum" style="color:var(--mint);">100%</b>
+        <span style="margin-left:12px;color:var(--text-mute);">정규화되어 적용됨</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn-ghost btn" onclick="applyWeightPreset(20,30,50)" style="padding:6px 12px;font-size:11px;">기본 20 / 30 / 50</button>
+        <button class="btn-ghost btn" onclick="applyWeightPreset(30,40,30)" style="padding:6px 12px;font-size:11px;">시장 중심</button>
+        <button class="btn-ghost btn" onclick="applyWeightPreset(10,20,70)" style="padding:6px 12px;font-size:11px;">종목 중심</button>
+        <button class="btn-ghost btn" onclick="applyWeightPreset(33,33,34)" style="padding:6px 12px;font-size:11px;">균등</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1560,7 +1522,7 @@ body {
   
   <!-- 역사적 참고 사례 -->
   <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
-    <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--mint);">📚 역사적 사례로 보는 종합점수 (기본 가중치 기준)</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--mint);">역사적 사례로 보는 종합점수 (기본 가중치 기준)</div>
     <div style="overflow-x:auto;">
       <table class="ticker-table" style="min-width:auto;">
         <thead>
@@ -1580,7 +1542,7 @@ body {
             <td class="num mono">12</td>
             <td class="num mono">20</td>
             <td class="num"><span class="score-pill" style="background:rgba(47,90,58,0.16);color:#2F5A3A;">96</span></td>
-            <td><span style="color:#2F5A3A;">🔥 극한공포 매수</span></td>
+            <td><span style="color:#2F5A3A">극한공포 매수</span></td>
           </tr>
           <tr>
             <td>2020 코로나 쇼크</td>
@@ -1588,7 +1550,7 @@ body {
             <td class="num mono">5</td>
             <td class="num mono">15</td>
             <td class="num"><span class="score-pill" style="background:rgba(47,90,58,0.16);color:#2F5A3A;">99</span></td>
-            <td><span style="color:#2F5A3A;">🔥 극한공포 매수</span></td>
+            <td><span style="color:#2F5A3A">극한공포 매수</span></td>
           </tr>
           <tr>
             <td>2022 금리인상</td>
@@ -1596,7 +1558,7 @@ body {
             <td class="num mono">22</td>
             <td class="num mono">28</td>
             <td class="num"><span class="score-pill" style="background:rgba(78,122,85,0.11);color:#4E7A55;">76</span></td>
-            <td><span style="color:#4E7A55;">🟢 매수</span></td>
+            <td><span style="color:#4E7A55">매수</span></td>
           </tr>
           <tr>
             <td>평상시 (2024년 대부분)</td>
@@ -1604,7 +1566,7 @@ body {
             <td class="num mono">55</td>
             <td class="num mono">55</td>
             <td class="num"><span class="score-pill" style="background:rgba(196,165,123,0.20);color:#8A6D3B;">47</span></td>
-            <td><span style="color:#8A6D3B;">🟡 중립 관망</span></td>
+            <td><span style="color:#8A6D3B">중립 관망</span></td>
           </tr>
           <tr>
             <td>2024 AI 주식 열풍</td>
@@ -1612,7 +1574,7 @@ body {
             <td class="num mono">75</td>
             <td class="num mono">72</td>
             <td class="num"><span class="score-pill" style="background:rgba(217,84,43,0.11);color:#D9542B;">26</span></td>
-            <td><span style="color:#D9542B;">🔴 소량익절</span></td>
+            <td><span style="color:#D9542B">소량익절</span></td>
           </tr>
           <tr>
             <td>2021 밈주식 광풍</td>
@@ -1620,14 +1582,57 @@ body {
             <td class="num mono">82</td>
             <td class="num mono">78</td>
             <td class="num"><span class="score-pill" style="background:rgba(191,70,32,0.15);color:#BF4620;">15</span></td>
-            <td><span style="color:#BF4620;">🔴 강력익절</span></td>
+            <td><span style="color:#BF4620">강력익절</span></td>
           </tr>
         </tbody>
       </table>
     </div>
     <div style="font-size:11px;color:var(--text-mute);margin-top:8px;">
-      💡 과거 사례와 비슷한 점수가 나오면 해당 구간의 전략을 참고하세요. 연속 함수 기반이라 동일 점수 ≒ 동일 시장 상태.
+      과거 사례와 비슷한 점수가 나오면 해당 구간의 전략을 참고하세요. 연속 함수 기반이라 동일 점수 ≒ 동일 시장 상태.
     </div>
+  </div>
+</div>
+
+<div class="step-label">
+  <div class="step-line"></div>
+  <span class="step-text">기록 <span class="step-en">/ HISTORY</span></span>
+</div>
+
+<!-- HISTORY SECTION -->
+<div class="history-section" id="history-section">
+  <div class="history-header">
+    <div class="history-title">
+      <span>포트폴리오 히스토리</span>
+      <span class="history-count" id="history-count">0개 저장됨</span>
+    </div>
+    <div class="history-actions">
+      <button class="btn-ghost btn" id="save-snapshot-btn" title="현재 상태를 수동으로 저장">
+        지금 저장
+      </button>
+      <button class="btn-ghost btn" id="compare-mode-btn" title="두 시점 비교">
+        비교
+      </button>
+      <button class="btn-ghost btn" id="export-csv-btn" title="CSV 파일로 다운로드">
+        내보내기
+      </button>
+      <button class="btn-ghost btn" id="import-csv-btn" title="CSV 파일에서 히스토리 복원">
+        가져오기
+      </button>
+      <input type="file" id="import-csv-file" accept=".csv" style="display:none;" />
+      <button class="btn-ghost btn" id="clear-history-btn" title="전체 기록 삭제" style="color:var(--red);">
+        전체 삭제
+      </button>
+    </div>
+  </div>
+  
+  <div class="compare-banner" id="compare-banner"></div>
+  
+  <div class="history-empty" id="history-empty">
+    아직 저장된 스냅샷이 없어요. 종목을 추가한 후 <b>전체 자동 업데이트</b> 버튼을 누르면 자동 저장됩니다.
+  </div>
+  
+  <div class="history-timeline" id="history-timeline" style="display:none;">
+    <!-- 타임라인이 JS로 렌더링됨 -->
   </div>
 </div>
 
@@ -1635,7 +1640,7 @@ body {
 <div class="modal-backdrop" id="fg-modal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">🧭 똑재 공포탐욕지수 산출</div>
+      <div class="modal-title">똑재 공포탐욕지수 산출</div>
       <button class="modal-close" id="fg-modal-close">×</button>
     </div>
     <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">
@@ -1726,7 +1731,7 @@ body {
 
 <!-- 외부 링크 CTA 섹션 -->
 <div class="external-cta">
-  <div class="cta-title">💎 더 깊이 있는 투자 인사이트</div>
+  <div class="cta-title">더 깊이 있는 투자 인사이트</div>
   <div class="cta-grid">
     <a href="https://www.youtube.com/@ttok_jae" class="cta-card cta-youtube" target="_blank" rel="noopener">
       <div class="cta-icon">
@@ -2739,15 +2744,15 @@ function setupWeightSliders() {
 
 // 크림베이지 팔레트에 맞춘 warm 스펙트럼: 짙은 그린(공포·매수) → 베이지골드(중립) → 오렌지(탐욕·익절)
 const TIERS = [
-  { min: 90, max: 100, emoji: '🔥', label: '극한공포 매수', color: '#2F5A3A', bg: 'rgba(47, 90, 58, 0.16)',   multiplier: 2.0 },
-  { min: 80, max: 89,  emoji: '🟢', label: '강력매수',      color: '#3F6B4A', bg: 'rgba(63, 107, 74, 0.14)',  multiplier: 1.5 },
-  { min: 70, max: 79,  emoji: '🟢', label: '매수',          color: '#4E7A55', bg: 'rgba(78, 122, 85, 0.11)',  multiplier: 1.2 },
-  { min: 60, max: 69,  emoji: '🟢', label: '소량매수',      color: '#6B8A5A', bg: 'rgba(107, 138, 90, 0.11)', multiplier: 1.0 },
-  { min: 40, max: 59,  emoji: '🟡', label: '중립 관망',     color: '#8A6D3B', bg: 'rgba(196, 165, 123, 0.20)', multiplier: 0.5 },
-  { min: 30, max: 39,  emoji: '🟠', label: '매수 보류',     color: '#B8813F', bg: 'rgba(184, 129, 63, 0.14)', multiplier: 0, sellPct: 0 },
-  { min: 20, max: 29,  emoji: '🔴', label: '소량익절',      color: '#D9542B', bg: 'rgba(217, 84, 43, 0.11)',  multiplier: 0, sellPct: 0.1 },
-  { min: 10, max: 19,  emoji: '🔴', label: '강력익절',      color: '#BF4620', bg: 'rgba(191, 70, 32, 0.15)',  multiplier: 0, sellPct: 0.2 },
-  { min: 0,  max: 9,   emoji: '❄️', label: '극한탐욕 익절', color: '#A03D1F', bg: 'rgba(160, 61, 31, 0.18)',  multiplier: 0, sellPct: 0.3 },
+  { min: 90, max: 100, emoji: '', label: '극한공포 매수', color: '#2F5A3A', bg: 'rgba(47, 90, 58, 0.16)',   multiplier: 2.0 },
+  { min: 80, max: 89,  emoji: '', label: '강력매수',      color: '#3F6B4A', bg: 'rgba(63, 107, 74, 0.14)',  multiplier: 1.5 },
+  { min: 70, max: 79,  emoji: '', label: '매수',          color: '#4E7A55', bg: 'rgba(78, 122, 85, 0.11)',  multiplier: 1.2 },
+  { min: 60, max: 69,  emoji: '', label: '소량매수',      color: '#6B8A5A', bg: 'rgba(107, 138, 90, 0.11)', multiplier: 1.0 },
+  { min: 40, max: 59,  emoji: '', label: '중립 관망',     color: '#8A6D3B', bg: 'rgba(196, 165, 123, 0.20)', multiplier: 0.5 },
+  { min: 30, max: 39,  emoji: '', label: '매수 보류',     color: '#B8813F', bg: 'rgba(184, 129, 63, 0.14)', multiplier: 0, sellPct: 0 },
+  { min: 20, max: 29,  emoji: '', label: '소량익절',      color: '#D9542B', bg: 'rgba(217, 84, 43, 0.11)',  multiplier: 0, sellPct: 0.1 },
+  { min: 10, max: 19,  emoji: '', label: '강력익절',      color: '#BF4620', bg: 'rgba(191, 70, 32, 0.15)',  multiplier: 0, sellPct: 0.2 },
+  { min: 0,  max: 9,   emoji: '', label: '극한탐욕 익절', color: '#A03D1F', bg: 'rgba(160, 61, 31, 0.18)',  multiplier: 0, sellPct: 0.3 },
 ];
 function getTier(s) { if (s==null) return null; return TIERS.find(t => s>=t.min && s<=t.max); }
 
@@ -2996,7 +3001,7 @@ function renderGroup(group) {
         </td>
         <td class="num">${signalCell(t)}</td>
         <td class="num"><span class="score-pill" style="${scorePillStyle}">${score ?? '?'}</span></td>
-        <td>${tier ? `<span class="signal-badge" style="${badgeStyle}">${tier.emoji} ${tier.label}</span>` : '<span style="color:var(--text-mute);font-size:11px;">지표 필요</span>'}</td>
+        <td>${tier ? `<span class="signal-badge" style="${badgeStyle}">${tier.label}</span>` : '<span style="color:var(--text-mute);font-size:11px;">지표 필요</span>'}</td>
         <td class="num action-amount" style="color:${actionColor};font-size:12px;">${actionText}</td>
         <td style="white-space:nowrap;">
           <button class="btn-ghost btn" onclick="refreshTicker(${t.id})" style="padding:4px 8px;font-size:11px;" title="새로고침">↻</button>
@@ -3112,7 +3117,7 @@ function toggleCompareMode() {
   const banner = document.getElementById('compare-banner');
   if (compareState.mode) {
     banner.classList.add('active');
-    banner.innerHTML = '🔀 비교 모드: 비교할 스냅샷 <b>2개</b>를 클릭하세요. <button class="btn btn-ghost" onclick="toggleCompareMode()">취소</button>';
+    banner.innerHTML = '비교 모드: 비교할 스냅샷 <b>2개</b>를 클릭하세요. <button class="btn btn-ghost" onclick="toggleCompareMode()">취소</button>';
   } else {
     banner.classList.remove('active');
   }
