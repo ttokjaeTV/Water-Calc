@@ -1,0 +1,125 @@
+name: 데이터 갱신 및 배포
+
+# 데이터는 git 에 커밋하지 않고 Pages 아티팩트로 바로 올린다.
+# 전종목 지표가 매일 수 MB씩 쌓이면 1년 만에 레포가 수 GB로 불어나기 때문이다.
+# 대신 캐시에 넣어두고, 매크로만 갱신하는 실행에서는 그 캐시를 재사용한다.
+
+on:
+  schedule:
+    # 한국시간 07:00 (UTC 22:00) — 미국장 마감 후, 국내장 개장 전. 전체 갱신.
+    - cron: '0 22 * * 1-5'
+    # 매크로만 — 한국시간 10:00 / 16:00 / 22:00
+    - cron: '0 1,7,13 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '갱신 범위'
+        type: choice
+        default: full
+        options: [full, macro]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 갱신 범위 결정
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            M="${{ inputs.mode }}"
+          elif [ "${{ github.event.schedule }}" = "0 22 * * 1-5" ]; then
+            M="full"
+          else
+            M="macro"
+          fi
+          echo "mode=$M" >> $GITHUB_OUTPUT
+          echo "이번 실행 범위: $M"
+
+      - name: 직전 데이터 복원
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: waterdata-
+          restore-keys: waterdata-
+
+      - name: 미국 전종목 보조지표
+        if: steps.mode.outputs.mode == 'full'
+        run: python scripts/build_us_indicators.py
+        env:
+          WORKERS: '10'
+
+      - name: 국내 전종목 보조지표
+        if: steps.mode.outputs.mode == 'full'
+        run: python scripts/build_kr_indicators.py
+        env:
+          WORKERS: '8'
+
+      - name: 매크로·버블 지표
+        run: python scripts/build_macro.py
+
+      - name: 산출물 점검
+        run: |
+          echo "--- data/ ---"
+          ls -la data/ || true
+          du -sh data/ || true
+          python - <<'PY'
+          import os, json, sys
+          need = ["macro.json", "bubble.json"]
+          miss = [f for f in need if not os.path.exists(os.path.join("data", f))]
+          if miss:
+              sys.exit(f"필수 산출물 없음: {miss}")
+          for d in ("us", "kr"):
+              p = os.path.join("data", d)
+              n = len(os.listdir(p)) if os.path.isdir(p) else 0
+              print(f"  {d} 샤드 {n}개")
+          m = json.load(open("data/macro.json", encoding="utf-8"))
+          errs = m.get("errors") or []
+          if errs:
+              print("  매크로 수집 실패 항목:")
+              for e in errs:
+                  print("   -", e["source"], e["error"][:90])
+          PY
+
+      - name: 데이터 캐시 저장
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: waterdata-${{ github.run_id }}
+
+      - name: 사이트 묶기
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          cp -r data _site/
+          [ -d assets ] && cp -r assets _site/ || true
+          echo "배포 크기: $(du -sh _site | cut -f1)"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

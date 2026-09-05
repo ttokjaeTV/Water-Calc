@@ -1,0 +1,21 @@
+# 데이터는 커밋하지 않는다.
+# GitHub Actions 가 만들어 Pages 아티팩트로 바로 배포한다.
+# 전종목 지표를 매일 커밋하면 1년이면 레포가 수 GB로 불어난다.
+data/
+
+# 다만 손으로 채우는 값은 예외 — 이건 사람이 관리하는 파일이다.
+!data/
+data/*
+!data/manual.json
+
+# Vercel 시절 잔재 (legacy/ 에 사본이 있다)
+ttokjae-api/
+.vercel
+.env*.local
+
+# OS·에디터
+.DS_Store
+Thumbs.db
+*.swp
+__pycache__/
+*.pyc
