@@ -19,3 +19,6 @@ Thumbs.db
 *.swp
 __pycache__/
 *.pyc
+
+# 도구 설치 잔재
+*.whl
