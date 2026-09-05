@@ -5,6 +5,14 @@ name: 데이터 갱신 및 배포
 # 대신 캐시에 넣어두고, 매크로만 갱신하는 실행에서는 그 캐시를 재사용한다.
 
 on:
+  # 코드를 고쳐 푸시하면 바로 반영돼야 한다. 다만 전종목 수집을 매번 다시 할
+  # 이유는 없으므로, 푸시 때는 캐시된 데이터를 그대로 얹어 배포만 다시 한다.
+  push:
+    branches: [master, main]
+    paths-ignore:
+      - 'README.md'
+      - 'legacy/**'
+      - '.gitignore'
   schedule:
     # 한국시간 07:00 (UTC 22:00) — 미국장 마감 후, 국내장 개장 전. 전체 갱신.
     - cron: '0 22 * * 1-5'
@@ -13,10 +21,10 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: '갱신 범위'
+        description: '갱신 범위 (deploy = 수집 없이 배포만)'
         type: choice
         default: full
-        options: [full, macro]
+        options: [full, macro, deploy]
 
 permissions:
   contents: read
@@ -41,13 +49,17 @@ jobs:
       - name: 갱신 범위 결정
         id: mode
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            M="${{ inputs.mode }}"
-          elif [ "${{ github.event.schedule }}" = "0 22 * * 1-5" ]; then
-            M="full"
-          else
-            M="macro"
-          fi
+          case "${{ github.event_name }}" in
+            workflow_dispatch) M="${{ inputs.mode }}" ;;
+            push)              M="deploy" ;;
+            schedule)
+              if [ "${{ github.event.schedule }}" = "0 22 * * 1-5" ]; then
+                M="full"
+              else
+                M="macro"
+              fi ;;
+            *)                 M="macro" ;;
+          esac
           echo "mode=$M" >> $GITHUB_OUTPUT
           echo "이번 실행 범위: $M"
 
@@ -70,8 +82,20 @@ jobs:
         env:
           WORKERS: '8'
 
+      # deploy 모드는 캐시를 그대로 쓴다. 다만 캐시가 비어 있으면
+      # (첫 실행이거나 7일 미사용으로 만료) 매크로라도 만들어야 점검을 통과한다.
       - name: 매크로·버블 지표
+        if: steps.mode.outputs.mode != 'deploy' || hashFiles('data/macro.json') == ''
         run: python scripts/build_macro.py
+
+      - name: 캐시가 비어 있으면 지표도 수집
+        if: steps.mode.outputs.mode == 'deploy' && hashFiles('data/kr/*.json') == ''
+        run: |
+          echo "캐시에 지표가 없다. 최소한의 세트를 만든다."
+          LIMIT=800 python scripts/build_kr_indicators.py || true
+          LIMIT=800 python scripts/build_us_indicators.py || true
+        env:
+          WORKERS: '10'
 
       - name: 산출물 점검
         run: |
