@@ -30,6 +30,7 @@ Vercel은 더 이상 쓰지 않는다.
 ```
 현재가·종목명·환율   ttokjaeTV/portfolio-sheet-data  (10분마다 갱신, 그쪽 레포가 관리)
 보조지표             이 레포 data/us|kr/{첫글자}.json (일 1회, 전일 종가 기준)
+외국인 순매수        KRX 정보데이터시스템 (로그인 필요, pykrx)
 매크로·버블          이 레포 data/macro.json, bubble.json (하루 4회)
 ```
 
@@ -146,7 +147,9 @@ TSLA 2026-09-04 기준 RSI가 시트 54.97 / 표준 50.93으로 갈린다. 둘 �
    (Deploy from a branch 아님)
 4. **Actions 탭 → 데이터 갱신 및 배포 → Run workflow → mode: full** 로 첫 실행
    - 15~25분 걸린다. 전종목 일봉을 받아 지표를 계산한다.
-5. Vercel 프로젝트 `ttokjae-api` 는 배포가 확인된 뒤 삭제
+5. **Settings → Secrets and variables → Actions** 에 `KRX_ID`, `KRX_PW` 등록
+   - 외국인 순매수(똑재 공포탐욕지수 4번째 재료)에만 쓰인다. 없어도 나머지는 돈다.
+6. Vercel 프로젝트 `ttokjae-api` 는 배포가 확인된 뒤 삭제
 
 ## 평소 운영
 
@@ -189,8 +192,13 @@ python3 -m http.server 8000                        # http://localhost:8000
 손으로 채운다. `macro.json`의 `errors` 배열과 `yieldCurveSource`를 보면 무엇이
 자동이고 무엇이 근사인지 알 수 있다. **근사치를 실측처럼 쓰지 말 것.**
 
-**KRX는 2026년부터 전면 로그인제다.** 외국인 순매수·52주 신고가 비율은 자동 수집이
-안 되어 `null`로 두고 화면에서 수기 입력을 받는다. 지어내지 않는다.
+**KRX는 2026년부터 전면 로그인제다.** 하지만 로그인하면 접근된다.
+`scripts/krx_auth.py` 가 자격증명을 올리고 `pykrx` 가 로그인을 처리한다.
+자격증명이 없으면 외국인 순매수만 `null` 로 남고 나머지는 정상 수집된다. 지어내지 않는다.
+
+**`krx.env` 에는 BOM 이 붙어 있다.** `utf-8` 로 읽으면 첫 키가 `KRX_ID` 가 아니라
+`\ufeffKRX_ID` 가 되어 조용히 실패한다. 반드시 `utf-8-sig` 로 연다.
+자격증명 값은 읽거나 출력하지 않는다 — 성공/실패와 경로만 로그에 남긴다.
 
 ---
 

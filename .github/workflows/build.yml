@@ -46,6 +46,11 @@ jobs:
         with:
           python-version: '3.11'
 
+      # 외국인 순매수는 KRX 로그인이 필요하고, 로그인은 pykrx 가 처리한다.
+      # 이 항목 하나 때문에 전체가 멈추면 안 되므로 설치 실패도 넘긴다.
+      - name: pykrx 설치
+        run: pip install --quiet pykrx || echo "pykrx 설치 실패 — KRX 항목은 건너뛴다"
+
       - name: 갱신 범위 결정
         id: mode
         run: |
@@ -90,8 +95,13 @@ jobs:
 
       # deploy 모드는 캐시를 그대로 쓴다. 다만 캐시가 비어 있으면
       # (첫 실행이거나 7일 미사용으로 만료) 매크로라도 만들어야 점검을 통과한다.
+      # KRX_ID / KRX_PW 는 레포 Settings > Secrets and variables > Actions 에 등록한다.
+      # 없으면 외국인 순매수만 null 로 남고 나머지는 정상 수집된다.
       - name: 매크로·버블 지표
         if: steps.mode.outputs.mode != 'deploy' || hashFiles('data/macro.json') == ''
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
         run: python scripts/build_macro.py
 
       # 엔진을 고쳤거나 캐시가 만료되면 여기로 온다. 일부만 새 형식이면
