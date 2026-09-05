@@ -1993,6 +1993,7 @@ const DS = {
   shards: new Map(),   // 'us:A' → {TICKER:{지표}}
   macro: null,
   bubble: null,
+  pending: { us: {}, kr: {} },   // 신규상장 등 일봉 부족 종목
   errors: [],
 };
 
@@ -2069,6 +2070,15 @@ DS.loadPrices = async function() {
   }));
 };
 
+// 상장 직후라 일봉이 모자라 지표를 못 낸 종목. '데이터 없음' 과 구분해서
+// '신규상장' 이라고 정확히 알려주기 위해 따로 받는다.
+DS.loadPending = async function() {
+  await Promise.all(['us', 'kr'].map(async mk => {
+    try { DS.pending[mk] = await fetchJson(`${DATA_BASE}/pending_${mk}.json`); }
+    catch (e) { DS.pending[mk] = {}; }
+  }));
+};
+
 DS.loadMacro = async function() {
   try { DS.macro = await fetchJson(`${DATA_BASE}/macro.json`); }
   catch (e) { DS.errors.push(`macro.json: ${e.message}`); }
@@ -2079,7 +2089,7 @@ DS.loadMacro = async function() {
 DS.init = function() {
   if (DS.loading) return DS.loading;
   DS.loading = (async () => {
-    await Promise.all([DS.loadPrices(), DS.loadMacro()]);
+    await Promise.all([DS.loadPrices(), DS.loadMacro(), DS.loadPending()]);
     DS.ready = true;
     if (DS.errors.length) console.warn('데이터 로드 경고', DS.errors);
   })();
@@ -2114,7 +2124,10 @@ async function getQuote(ticker, market) {
   const q = DS.quotes.get(tk);
   const ind = await DS.indicators(tk, market || (q ? q.market : 'us'));
 
-  if (!q && !ind) {
+  const mk = (q && q.market) || market || 'us';
+  const pend = (DS.pending[mk] || {})[tk] || null;
+
+  if (!q && !ind && !pend) {
     throw new Error(`'${tk}' 를 찾을 수 없습니다. 상장폐지되었거나 아직 수집되지 않은 종목입니다.`);
   }
 
@@ -2137,6 +2150,8 @@ async function getQuote(ticker, market) {
     changeFromHigh: ind ? ind.from_high : null,
     // 새로 늘어난 보조지표 일체
     ind: ind || null,
+    // 지표가 없는 이유. 신규상장이면 여기에 상장일·일봉 수가 들어온다.
+    pending: pend,
   };
 }
 
@@ -2565,6 +2580,16 @@ function renderMacroExtra() {
 function signalCell(t) {
   const ind = t.ind;
   if (!ind) {
+    // 왜 지표가 없는지 구분해서 알려준다. 신규상장과 '데이터 없음' 은 다르다.
+    const p = t.pending;
+    if (p) {
+      const need = Math.max(0, 30 - Number(p.bars || 0));
+      return `<div style="line-height:1.5;">
+        <div style="font-size: 13px;font-weight:800;color:var(--accent);">신규상장</div>
+        <div style="font-size: 12px;color:var(--ink-mute);">${p.first ? `${p.first} 상장 · ` : ''}일봉 ${p.bars}일</div>
+        <div style="font-size: 12px;color:var(--ink-mute);">${need > 0 ? `약 ${need}거래일 뒤 산출` : '곧 산출'}</div>
+      </div>`;
+    }
     return `<div style="font-size: 13px;color:var(--ink-mute);">지표 없음</div>`;
   }
   // 5축 개편 이전에 만들어진 데이터가 남아 있을 수 있다.
@@ -2664,7 +2689,7 @@ async function importPortfolio(file) {
       avgPrice: v.qty ? Math.round(v.cost / v.qty * 100) / 100 : null,
       price: q.price, rsi: q.rsi, high52w: q.high52w, low52w: q.low52w,
       changeFromLow: q.changeFromLow, changeFromHigh: q.changeFromHigh,
-      ind: q.ind, priceAsOf: q.priceAsOf, changePct: q.changePct,
+      ind: q.ind, pending: q.pending, priceAsOf: q.priceAsOf, changePct: q.changePct,
       loading: false,
     };
     state.tickers.push(t);
@@ -3155,7 +3180,7 @@ async function addTicker(ticker, name, group, market) {
       changeFromLow: data.changeFromLow,
       changeFromHigh: data.changeFromHigh,
       name: data.name || name,
-      ind: data.ind, priceAsOf: data.priceAsOf, changePct: data.changePct,
+      ind: data.ind, pending: data.pending, priceAsOf: data.priceAsOf, changePct: data.changePct,
       loading: false,
     });
     // 종목명이 업데이트됐으니 분류 재확인 (market 정보 전달)
@@ -3202,7 +3227,7 @@ async function refreshTicker(id) {
       high52w: data.high52w, low52w: data.low52w,
       changeFromLow: data.changeFromLow,
       changeFromHigh: data.changeFromHigh,
-      ind: data.ind, priceAsOf: data.priceAsOf, changePct: data.changePct,
+      ind: data.ind, pending: data.pending, priceAsOf: data.priceAsOf, changePct: data.changePct,
       loading: false, error: null,
     });
   } catch(e) {
@@ -3328,7 +3353,8 @@ function renderGroup(group) {
         </td>
         <td class="num">${signalCell(t)}</td>
         <td class="num"><span class="score-pill" style="${scorePillStyle}">${score ?? '?'}</span></td>
-        <td>${tier ? `<span class="signal-badge" style="${badgeStyle}">${tier.label}</span>` : '<span style="color:var(--text-mute);font-size: 13px;">지표 필요</span>'}</td>
+        <td>${tier ? `<span class="signal-badge" style="${badgeStyle}">${tier.label}</span>`
+          : `<span style="color:var(--text-mute);font-size: 13px;">${t.pending ? '집계 전' : '지표 필요'}</span>`}</td>
         <td class="num action-amount" style="color:${actionColor};font-size: 14px;">${actionText}</td>
         <td style="white-space:nowrap;">
           <button class="btn-ghost btn" onclick="toggleDetail(${t.id})" style="padding:4px 8px;font-size: 13px;"
@@ -4379,7 +4405,7 @@ DS.init().then(renderMacroExtra).catch(() => {});
       Object.assign(t, {
         price: d.price, rsi: d.rsi, high52w: d.high52w, low52w: d.low52w,
         changeFromLow: d.changeFromLow, changeFromHigh: d.changeFromHigh,
-        ind: d.ind, priceAsOf: d.priceAsOf, changePct: d.changePct,
+        ind: d.ind, pending: d.pending, priceAsOf: d.priceAsOf, changePct: d.changePct,
         name: d.name || t.name, loading: false, error: null,
       });
     } catch (e) {

@@ -176,8 +176,13 @@ def main():
         except Exception:
             return None
         bars = parse_sise(raw)
+        # 일봉이 모자라면 계산을 못 한다. 다만 '종목이 없는 것' 과
+        # '상장한 지 얼마 안 된 것' 은 사용자에게 다르게 알려야 해서
+        # 여기서 구분해 따로 남긴다.
         if len(bars) < 30:
-            return None
+            return {"_short": True, "ticker": code, "name": name,
+                    "bars": len(bars),
+                    "first": bars[0]["date"] if bars else None}
         res = I.compute_all(bars)
         if not res.get("ok"):
             return None
@@ -185,8 +190,13 @@ def main():
         row["kind"] = kind
         return row
 
-    rows = [r for r in C.run_pool(uni, one, workers, "KR", 300) if r]
+    results = [r for r in C.run_pool(uni, one, workers, "KR", 300) if r]
+    short = {r["ticker"]: {"name": r["name"], "bars": r["bars"], "first": r["first"]}
+             for r in results if r.get("_short")}
+    rows = [r for r in results if not r.get("_short")]
     rows.sort(key=lambda r: r["ticker"])
+    if short:
+        print(f"  일봉 부족(신규상장 등) {len(short)}종목 — 별도 기록")
 
     print(f"  429/오류 브레이크 {throttle.hits}회")
     C.guard_ratio(len(rows), len(uni), 0.5, "국내")
@@ -199,11 +209,16 @@ def main():
     C.write_json(os.path.join(C.DATA, "index_kr.json"),
                  [[r["ticker"], r["name"], r.get("kind", "")] for r in rows])
 
+    # 상장 직후라 지표를 못 내는 종목. 화면에서 '데이터 없음' 대신
+    # '신규상장' 이라고 정확히 알려주기 위한 목록이다.
+    C.write_json(os.path.join(C.DATA, "pending_kr.json"), short)
+
     C.write_json(os.path.join(C.DATA, "meta_kr.json"), {
         "updated": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "count": len(rows),
         "universe": len(uni),
         "asOf": rows[-1]["date"] if rows else None,
+        "pending": len(short),
     }, compact=False)
 
 

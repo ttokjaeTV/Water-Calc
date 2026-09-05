@@ -101,15 +101,24 @@ def main():
         except Exception:
             return None
         bars, name = parse_chart(d)
+        # 일봉 부족은 '종목 없음' 과 다르다. 신규 상장일 수 있으니 구분해 남긴다.
         if not bars or len(bars) < 30:
+            if bars:
+                return {"_short": True, "ticker": t.strip().upper(), "name": name,
+                        "bars": len(bars), "first": bars[0]["date"]}
             return None
         res = I.compute_all(bars)
         if not res.get("ok"):
             return None
         return I.to_row(t.strip().upper(), name, res)
 
-    rows = [r for r in C.run_pool(tickers, one, workers, "US", 500) if r]
+    results = [r for r in C.run_pool(tickers, one, workers, "US", 500) if r]
+    short = {r["ticker"]: {"name": r["name"], "bars": r["bars"], "first": r["first"]}
+             for r in results if r.get("_short")}
+    rows = [r for r in results if not r.get("_short")]
     rows.sort(key=lambda r: r["ticker"])
+    if short:
+        print(f"  일봉 부족(신규상장 등) {len(short)}종목 — 별도 기록")
 
     print(f"  429 발생 {throttle.hits}회")
     C.guard_ratio(len(rows), len(tickers), 0.5, "미국")
@@ -121,12 +130,15 @@ def main():
     C.write_json(os.path.join(C.DATA, "index_us.json"),
                  [[r["ticker"], r["name"]] for r in rows])
 
+    C.write_json(os.path.join(C.DATA, "pending_us.json"), short)
+
     C.write_json(os.path.join(C.DATA, "meta_us.json"), {
         "updated": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "count": len(rows),
         "universe": len(tickers),
         "asOf": rows[-1]["date"] if rows else None,
         "throttleHits": throttle.hits,
+        "pending": len(short),
     }, compact=False)
 
 
