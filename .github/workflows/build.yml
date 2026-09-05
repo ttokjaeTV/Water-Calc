@@ -75,26 +75,8 @@ jobs:
 
       - name: 산출물 점검
         run: |
-          echo "--- data/ ---"
           ls -la data/ || true
-          du -sh data/ || true
-          python - <<'PY'
-          import os, json, sys
-          need = ["macro.json", "bubble.json"]
-          miss = [f for f in need if not os.path.exists(os.path.join("data", f))]
-          if miss:
-              sys.exit(f"필수 산출물 없음: {miss}")
-          for d in ("us", "kr"):
-              p = os.path.join("data", d)
-              n = len(os.listdir(p)) if os.path.isdir(p) else 0
-              print(f"  {d} 샤드 {n}개")
-          m = json.load(open("data/macro.json", encoding="utf-8"))
-          errs = m.get("errors") or []
-          if errs:
-              print("  매크로 수집 실패 항목:")
-              for e in errs:
-                  print("   -", e["source"], e["error"][:90])
-          PY
+          python scripts/verify_outputs.py
 
       - name: 데이터 캐시 저장
         uses: actions/cache/save@v4

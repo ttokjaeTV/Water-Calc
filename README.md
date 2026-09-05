@@ -1,8 +1,8 @@
-# 기계적 물타기 계산기 (water-calc)
+# 기계적 물타기 계산기 (Water-Calc)
 
 시장 상황과 종목의 보조지표를 함께 보고, 물타기 강도를 9단계로 제시하는 도구.
 
-- 배포 주소: `https://ttokjaetv.github.io/water-calc/` (Pages 설정 후)
+- 배포 주소: `https://ttokjaetv.github.io/Water-Calc/` (Pages 설정 후)
 - 로컬 폴더: `C:\Users\이상준\Desktop\Claude\Water Calc\`
 
 ---
@@ -107,7 +107,7 @@ TSLA 2026-09-04 기준 RSI가 시트 54.97 / 표준 50.93으로 갈린다. 둘 �
 
 ## 최초 설정 (한 번만)
 
-1. GitHub에서 **`ttokjaeTV/water-calc`** 레포 생성 (Public 권장 — Actions 무제한)
+1. GitHub에서 **`ttokjaeTV/Water-Calc`** 레포 생성 (Public 권장 — Actions 무제한)
    - 레포명은 반드시 영문. 한글이면 Pages URL이 인코딩돼 `fetch`가 깨진다.
 2. GitHub Desktop에서 이 폴더를 추가하고 push
 3. 레포 **Settings → Pages → Source** 를 **GitHub Actions** 로 설정
