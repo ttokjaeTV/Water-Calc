@@ -389,6 +389,186 @@ def down_streak(closes: Sequence[float]) -> int:
 # ─────────────────────────────────────────────────────────
 
 # 과매도(=매수 우호) 신호 판정 기준. UI의 설명 문구와 이 표가 유일한 출처다.
+# ─────────────────────────────────────────────────────────
+# 5개 축 연속점수
+# ─────────────────────────────────────────────────────────
+#
+# 규칙을 켜짐/꺼짐으로 세던 방식에는 두 가지 문제가 있었다.
+#
+#  1. 중복 가중 — RSI·스토캐스틱·CCI·Williams %R 은 전부 단기 오실레이터라
+#     같이 켜지고 같이 꺼진다(스토캐 ↔ W%R 자카드 0.68). 같은 현상을 네 번
+#     세면 그 하나가 사실상 4표를 갖는다.
+#  2. 계단 — 신호 1개가 10점이라 0개(30%)와 1개(33%)가 50점과 60점에 뭉쳤다.
+#     493종목 표본에서 절반 가까이가 50~69점 한 칸에 몰렸다.
+#
+# 그래서 성격이 겹치는 것끼리 묶어 축을 만들고, 각 축을 0~100 연속값으로 낸다.
+# 축 안에서는 평균을 내므로 중복이 가중으로 이어지지 않는다.
+#
+#   축1 과매도 강도  RSI·스토캐스틱·CCI·Williams %R
+#   축2 낙폭 심도    52주 고점 대비·이격도 20/60/120/200일
+#   축3 자금 흐름    MFI·거래량비율·OBV 기울기
+#   축4 추세 위험    ADX/DI·데드크로스·연속하락·60일 모멘텀   (감점)
+#   축5 반등 조짐    MACD 히스토그램 전환·볼린저 %B 회복      (가점)
+#
+# 값이 클수록 '매수 우호'다. 축4만 반대로 클수록 위험하다.
+
+def _map(v: Optional[float], pts) -> Optional[float]:
+    """구간 선형보간. pts 는 (입력, 출력) 오름차순."""
+    if v is None:
+        return None
+    if v <= pts[0][0]:
+        return float(pts[0][1])
+    if v >= pts[-1][0]:
+        return float(pts[-1][1])
+    for i in range(len(pts) - 1):
+        x0, y0 = pts[i]
+        x1, y1 = pts[i + 1]
+        if x0 <= v <= x1:
+            if x1 == x0:
+                return float(y1)
+            return y0 + (y1 - y0) * (v - x0) / (x1 - x0)
+    return None
+
+
+def _avg(vals):
+    v = [x for x in vals if x is not None]
+    return sum(v) / len(v) if v else None
+
+
+def axis_oversold(o: Dict) -> Optional[float]:
+    """단기 오실레이터 네 개의 평균. 넷이 서로 중복이라 합산이 아니라 평균이다."""
+    return _avg([
+        _map(o.get("rsi"),        [(0, 100), (30, 80), (50, 50), (70, 20), (100, 0)]),
+        _map(o.get("stoch_k"),    [(0, 100), (20, 80), (50, 50), (80, 20), (100, 0)]),
+        _map(o.get("cci"),        [(-250, 100), (-100, 80), (0, 50), (100, 20), (250, 0)]),
+        _map(o.get("williams_r"), [(-100, 100), (-80, 80), (-50, 50), (-20, 20), (0, 0)]),
+    ])
+
+
+def axis_drawdown(o: Dict) -> Optional[float]:
+    """얼마나 깊이 눌렸나. 기간이 길수록 임계를 크게 잡는다."""
+    return _avg([
+        _map(o.get("from_high"), [(-60, 100), (-40, 85), (-25, 65), (-10, 35), (0, 5)]),
+        _map(o.get("disp20"),    [(-20, 100), (-10, 80), (-3, 55), (3, 40), (10, 10)]),
+        _map(o.get("disp60"),    [(-30, 100), (-15, 80), (-5, 55), (5, 40), (15, 10)]),
+        _map(o.get("disp120"),   [(-40, 100), (-20, 80), (-7, 55), (7, 40), (20, 10)]),
+        _map(o.get("disp200"),   [(-50, 100), (-25, 80), (-10, 55), (10, 40), (25, 10)]),
+    ])
+
+
+def axis_flow(o: Dict) -> Optional[float]:
+    """
+    자금이 들어오는지. 낙폭 구간에서 거래량이 터지면 투매(바닥 신호)로 본다.
+    OBV 가 우상향이면 파는 사람보다 사는 사람이 많다는 뜻이라 가점.
+    """
+    return _avg([
+        _map(o.get("mfi"),        [(0, 100), (20, 80), (50, 50), (80, 20), (100, 0)]),
+        _map(o.get("vol_ratio"),  [(0.3, 35), (1.0, 50), (2.0, 70), (3.5, 85), (6, 90)]),
+        _map(o.get("obv_slope"),  [(-40, 15), (-15, 35), (0, 50), (15, 68), (40, 85)]),
+    ])
+
+
+def axis_trend_risk(o: Dict) -> Optional[float]:
+    """
+    떨어지는 칼날인가. 여기만 클수록 나쁘다.
+    과매도 신호가 아무리 많아도 하락 추세가 살아 있으면 깎아야 한다.
+    """
+    parts = []
+    adx, pdi, ndi = o.get("adx"), o.get("di_plus"), o.get("di_minus")
+    if adx is not None and pdi is not None and ndi is not None:
+        # 추세가 강하면서(ADX 높음) 방향이 아래(DI- 우위)일 때만 위험하다.
+        strength = _map(adx, [(10, 0), (20, 30), (25, 55), (35, 80), (50, 100)]) or 0
+        parts.append(strength if ndi > pdi else strength * 0.15)
+    c = o.get("cross")
+    if c is not None:
+        parts.append({"dead_cross": 95, "dead": 70,
+                      "golden_cross": 5, "golden": 20}.get(c, 50))
+    ds = o.get("down_streak")
+    if ds is not None:
+        parts.append(_map(float(ds), [(0, 25), (2, 40), (4, 60), (7, 80), (10, 95)]))
+    m60 = o.get("mom60")
+    if m60 is not None:
+        parts.append(_map(m60, [(-40, 90), (-20, 70), (0, 45), (20, 25), (40, 10)]))
+    return _avg(parts)
+
+
+def axis_reversal(o: Dict) -> Optional[float]:
+    """돌아설 조짐. MACD 상향 전환과 볼린저 하단 회복이 핵심."""
+    parts = []
+    turn, hist = o.get("macd_turn"), o.get("macd_hist")
+    if turn == "up":
+        parts.append(95)
+    elif turn == "down":
+        parts.append(10)
+    elif hist is not None:
+        parts.append(62 if hist > 0 else 38)
+    pb = o.get("boll_pb")
+    if pb is not None:
+        # 하단을 막 되밟고 올라오는 0~25% 구간이 가장 좋다.
+        parts.append(_map(pb, [(-20, 60), (0, 85), (20, 75), (50, 50), (80, 25), (110, 15)]))
+    return _avg(parts)
+
+
+AXIS_LABEL = {
+    "oversold": "과매도 강도",
+    "drawdown": "낙폭 심도",
+    "flow": "자금 흐름",
+    "trend_risk": "추세 위험",
+    "reversal": "반등 조짐",
+}
+
+# 앞 세 축이 본체, 추세 위험은 빼고 반등 조짐은 더한다.
+AXIS_WEIGHT = {"oversold": 0.40, "drawdown": 0.35, "flow": 0.25}
+RISK_WEIGHT = 0.28
+REVERSAL_WEIGHT = 0.16
+
+
+# 축을 평균 내면 값이 가운데로 몰린다(정규분포로의 회귀). 실제로 국내 493종목
+# 표본에서 원점수가 23~84 사이에만 들어와 60점대 한 칸에 40%가 뭉쳤다.
+# 9단계 등급을 쓰려면 이걸 펴야 한다.
+#
+# 아래 앵커는 그 표본의 분위수(2/10/25/50/75/90/98%)를 등급 전체에 고르게
+# 배치하도록 잡은 것이다. 경험값이므로, 분포가 한쪽으로 치우치면
+# scripts/calibrate_score.py 로 다시 뽑아 갱신한다.
+SCORE_STRETCH = [(0, 0), (29, 5), (43, 18), (52, 35), (61, 55),
+                 (67, 72), (72, 85), (78, 95), (100, 100)]
+
+
+def stretch_score(raw: Optional[float]) -> Optional[int]:
+    v = _map(raw, SCORE_STRETCH)
+    return None if v is None else int(max(0, min(100, round(v))))
+
+
+def compute_axes(o: Dict) -> Dict:
+    ax = {
+        "oversold": axis_oversold(o),
+        "drawdown": axis_drawdown(o),
+        "flow": axis_flow(o),
+        "trend_risk": axis_trend_risk(o),
+        "reversal": axis_reversal(o),
+    }
+    base_parts, wsum = 0.0, 0.0
+    for k, w in AXIS_WEIGHT.items():
+        if ax[k] is not None:
+            base_parts += ax[k] * w
+            wsum += w
+    if wsum == 0:
+        return {"axes": ax, "score": None}
+    base = base_parts / wsum
+
+    score = base
+    if ax["trend_risk"] is not None:
+        score -= (ax["trend_risk"] - 50) * RISK_WEIGHT
+    if ax["reversal"] is not None:
+        score += (ax["reversal"] - 50) * REVERSAL_WEIGHT
+
+    raw = max(0, min(100, score))
+    return {"axes": {k: (round(v, 1) if v is not None else None) for k, v in ax.items()},
+            "base": round(base, 1),
+            "raw": round(raw, 1),
+            "score": stretch_score(raw)}
+
+
 OVERSOLD_RULES = {
     "rsi":        ("rsi",        "<=", 30,   "RSI 30 이하"),
     "stoch":      ("stoch_k",    "<=", 20,   "%K·%D 모두 20 이하"),
@@ -507,13 +687,32 @@ def compute_all(bars: List[Bar]) -> Dict:
     out["overbought_n"] = len(ob_hits)
     out["rule_total"] = len(OVERSOLD_RULES)
 
-    # 종목점수 0~100. 과매도 신호가 많을수록 높다(= 매수 우호).
-    # 과매수 신호는 감점. ADX가 높은 하락추세(DI- 우위)는 '떨어지는 칼날'이라 감점한다.
-    score = 50.0 + (len(os_hits) - len(ob_hits)) * (50.0 / len(OVERSOLD_RULES)) * 2
-    if adx_v is not None and ndi is not None and pdi is not None:
-        if adx_v >= 25 and ndi > pdi:
-            score -= 8
-    out["stock_score"] = int(max(0, min(100, round(score))))
+    # 종목점수는 5개 축 연속점수에서 나온다.
+    # 신호 목록(oversold/overbought)은 '왜 이 점수인지' 설명용으로만 남긴다.
+    a = compute_axes(out)
+    out["axes"] = a["axes"]
+    out["base_score"] = a.get("base")
+    out["raw_score"] = a.get("raw")
+    out["stock_score"] = a["score"] if a["score"] is not None else 50
+
+    # 떨어지는 칼날 경고 — 화면 배지의 근거
+    out["knife"] = bool(
+        adx_v is not None and ndi is not None and pdi is not None
+        and adx_v >= 25 and ndi > pdi
+    )
+
+    # ATR 기반 물타기 간격. 종목마다 흔들리는 폭이 다른데 일률적으로
+    # -5%씩 담으면 변동성 큰 종목은 하루 만에 다 소진된다.
+    # 일평균 변동폭의 1.5배를 한 칸으로 잡는다.
+    if ap is not None and ap > 0:
+        step = round(ap * 1.5, 1)
+        out["dca_step_pct"] = step
+        c = closes[-1]
+        out["dca_levels"] = [round(c * (1 - step * i / 100), 4) for i in (1, 2, 3)]
+    else:
+        out["dca_step_pct"] = None
+        out["dca_levels"] = None
+
     return out
 
 
@@ -531,6 +730,13 @@ def to_row(sym: str, name: str, res: Dict) -> Dict:
         r[kk] = "" if v is None else v
     r["oversold"] = "|".join(res.get("oversold") or [])
     r["overbought"] = "|".join(res.get("overbought") or [])
+    ax = res.get("axes") or {}
+    for k in ("oversold", "drawdown", "flow", "trend_risk", "reversal"):
+        v = ax.get(k)
+        r["ax_" + k] = "" if v is None else v
+    r["knife"] = 1 if res.get("knife") else 0
+    r["raw_score"] = res.get("raw_score") or ""
+    r["dca_step_pct"] = res.get("dca_step_pct") or ""
     return r
 
 
@@ -541,4 +747,6 @@ CSV_COLUMNS = ["ticker", "name", "date", "close", "rsi", "sheet_rsi",
                "di_plus", "di_minus", "disp20", "disp60", "disp120", "disp200",
                "vol_ratio", "obv_slope", "cross", "high52", "low52", "from_high",
                "from_low", "mom20", "mom60", "down_streak", "oversold_n",
-               "overbought_n", "stock_score", "oversold", "overbought"]
+               "overbought_n", "stock_score", "oversold", "overbought",
+               "ax_oversold", "ax_drawdown", "ax_flow", "ax_trend_risk",
+               "ax_reversal", "knife", "dca_step_pct", "raw_score"]
