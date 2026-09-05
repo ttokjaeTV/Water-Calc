@@ -225,6 +225,55 @@ body {
   font-size: 10px; font-weight: 800; line-height: 1;
 }
 
+/* ── 종목 상세 펼침 ─────────────────────────────────
+   표 행을 클릭하면 아래로 근거가 펼쳐진다. 모달보다 맥락이 남는다. */
+.detail-row > td { padding: 0 !important; background: var(--bg-alt); }
+.dp-wrap { padding: 18px 20px 20px; }
+.dp-grid {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+}
+.dp-axis {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px;
+}
+.dp-head { display: flex; align-items: baseline; gap: 7px; }
+.dp-axis-name { font-size: 13px; font-weight: 800; }
+.dp-axis-role {
+  font-size: 10px; font-weight: 700; color: var(--ink-mute);
+  border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px;
+}
+.dp-axis-score {
+  margin-left: auto; font-size: 17px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.dp-desc { font-size: 10.5px; color: var(--ink-mute); margin: 4px 0 9px; line-height: 1.5; }
+.dp-row {
+  display: grid; grid-template-columns: 1fr auto 46px 26px;
+  align-items: center; gap: 7px; padding: 3px 0;
+}
+.dp-name  { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); }
+.dp-raw   { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dp-bar   { height: 5px; background: var(--bg-alt); border-radius: 3px; overflow: hidden; }
+.dp-bar i { display: block; height: 100%; }
+.dp-score { font-size: 11px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+.dp-formula {
+  margin-top: 14px; padding: 12px 14px; border-radius: 11px;
+  background: var(--white); border: 1px solid var(--border);
+  font-size: 12px; line-height: 1.9; font-variant-numeric: tabular-nums;
+}
+.dp-box {
+  margin-top: 10px; padding: 11px 14px; border-radius: 11px;
+  font-size: 12.5px; line-height: 1.75;
+}
+.dp-box-accent { background: var(--accent-soft); border: 1px solid var(--accent); }
+.dp-box-warn   { background: rgba(160,61,31,.10); border: 1px solid #A03D1F; }
+.dp-foot { margin-top: 11px; font-size: 10.5px; color: var(--ink-mute); line-height: 1.7; }
+.row-toggle {
+  cursor: pointer; user-select: none;
+  font-size: 10px; font-weight: 800; color: var(--accent);
+}
+
 /* ── 시장 참고 지표 타일 ────────────────────────────
    점수에는 안 들어가지만 국면을 읽는 데 쓰는 값들.
    19개를 수집해 놓고 4개만 보여주던 걸 여기로 끌어냈다. */
@@ -1803,8 +1852,24 @@ try {
 
 // API URL 설정이 필요 없어졌다. 데이터는 전부 정적 파일로 배포된다.
 
+// 사용자가 입력한 것만 저장한다.
+// 지표·현재가 같은 파생 데이터까지 localStorage 에 눌러 담으면, 서버 데이터가
+// 갱신돼도 화면은 예전에 저장된 값을 계속 본다. 실제로 5축 개편 전에 추가한
+// 종목이 '갱신 대기' 로 남아 있었다. 파생 데이터는 열 때마다 다시 읽는다.
+const TICKER_KEEP = ['id', 'ticker', 'name', 'group', 'market', 'holdings'];
+
 function saveState() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+  try {
+    const slim = {
+      ...state,
+      tickers: (state.tickers || []).map(t => {
+        const o = {};
+        for (const k of TICKER_KEEP) if (t[k] !== undefined) o[k] = t[k];
+        return o;
+      }),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
+  } catch(e){}
 }
 
 function saveHistory() {
@@ -2486,9 +2551,9 @@ function signalCell(t) {
   const hasAxes = AXES.some(([k]) => ind[k] !== '' && ind[k] != null);
   if (!hasAxes) {
     const n = Number(ind.oversold_n || 0);
-    return `<div style="cursor:pointer;" onclick="showIndicators(${t.id})">
+    return `<div style="cursor:pointer;" onclick="toggleDetail(${t.id})">
       <div style="font-weight:800;">${t.rsi != null ? t.rsi.toFixed(1) : '—'}</div>
-      <div style="font-size:10px;color:var(--ink-mute);">과매도 ${n}개 · 📊</div>
+      <div style="font-size:10px;color:var(--ink-mute);">과매도 ${n}개</div>
       <div style="font-size:9px;color:var(--accent);margin-top:2px;">5축 갱신 대기</div>
     </div>`;
   }
@@ -2509,10 +2574,139 @@ function signalCell(t) {
     ? `<div style="margin-top:3px;font-size:9px;font-weight:800;color:#A03D1F;">⚠ 하락추세 진행중</div>`
     : '';
 
-  return `<div style="cursor:pointer;min-width:112px;" onclick="showIndicators(${t.id})"
-               title="클릭하면 지표 전체를 봅니다">
+  return `<div style="cursor:pointer;min-width:112px;" onclick="toggleDetail(${t.id})"
+               title="클릭하면 근거가 펼쳐집니다">
             ${bars}${knife}
           </div>`;
+}
+
+// 표에서 행을 펼쳐 근거를 보여준다. 모달보다 맥락이 유지된다.
+const expanded = new Set();
+
+function toggleDetail(id) {
+  if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
+  renderGroups();
+}
+
+// 지표 원값 → 그 축에서 몇 점으로 환산됐는지. scripts/indicators.py 의
+// axis_* 함수가 쓰는 이름과 여기 키가 짝을 이룬다. 같이 고칠 것.
+const PART_RAW = {
+  'RSI(14)':        (i) => fmtNum(i.rsi, 1),
+  '스토캐스틱 %K':   (i) => fmtNum(i.stoch_k_raw, 1),
+  'CCI(20)':        (i) => fmtNum(i.cci, 1),
+  'Williams %R':    (i) => fmtNum(i.williams_r, 1),
+  '52주 고점 대비':  (i) => fmtNum(i.from_high, 1, '%'),
+  '20일선 이격':     (i) => fmtNum(i.disp20, 1, '%'),
+  '60일선 이격':     (i) => fmtNum(i.disp60, 1, '%'),
+  '120일선 이격':    (i) => fmtNum(i.disp120, 1, '%'),
+  '200일선 이격':    (i) => fmtNum(i.disp200, 1, '%'),
+  'MFI(14)':        (i) => fmtNum(i.mfi, 1),
+  '거래량 비율':     (i) => fmtNum(i.vol_ratio, 2, '배'),
+  'OBV 기울기':      (i) => fmtNum(i.obv_slope, 1, '%'),
+  'ADX / DI':       (i) => `${fmtNum(i.adx,1)} / +${fmtNum(i.di_plus,1)} / −${fmtNum(i.di_minus,1)}`,
+  '50/200일선':     (i) => ({golden:'골든크로스', dead:'데드크로스',
+                              golden_cross:'오늘 골든크로스', dead_cross:'오늘 데드크로스'}[i.cross] || '—'),
+  '연속 하락일':     (i) => (i.down_streak ?? '—') + '일',
+  '60일 모멘텀':     (i) => fmtNum(i.mom60, 1, '%'),
+  'MACD 전환':      (i) => i.macd_turn === 'up' ? '상향 전환'
+                          : i.macd_turn === 'down' ? '하향 전환'
+                          : (Number(i.macd_hist) > 0 ? '히스토그램 +' : '히스토그램 −'),
+  '볼린저 %B':      (i) => fmtNum(i.boll_pb, 1, '%'),
+};
+
+function fmtNum(v, d = 2, suffix = '') {
+  return (v === '' || v == null) ? '—' : Number(v).toFixed(d) + suffix;
+}
+
+// 펼쳐지는 상세 행. 축마다 '재료 지표 → 환산점수' 를 나란히 놓아
+// 왜 이 축이 이 점수인지 눈으로 따라갈 수 있게 한다.
+function detailRow(t, colspan) {
+  const ind = t.ind;
+  if (!ind) return '';
+  const parts = ind.parts || {};
+  const W = { oversold: 40, drawdown: 35, flow: 25 };
+
+  const axisBlocks = AXES.map(([k, label, color, desc]) => {
+    const key = k.replace('ax_', '');
+    const v = ind[k];
+    if (v === '' || v == null) return '';
+    const p = parts[key] || {};
+    const rows = Object.entries(p).map(([name, sc]) => {
+      const raw = PART_RAW[name] ? PART_RAW[name](ind) : '—';
+      return `<div class="dp-row">
+        <span class="dp-name">${name}</span>
+        <span class="dp-raw">${raw}</span>
+        <span class="dp-bar"><i style="width:${Math.max(0,Math.min(100,sc))}%;background:${color};"></i></span>
+        <span class="dp-score">${Number(sc).toFixed(0)}</span>
+      </div>`;
+    }).join('');
+    const w = W[key];
+    const role = key === 'trend_risk' ? '감점' : key === 'reversal' ? '가점' : `가중 ${w}%`;
+    return `<div class="dp-axis">
+      <div class="dp-head">
+        <span class="dp-axis-name" style="color:${color};">${label}</span>
+        <span class="dp-axis-role">${role}</span>
+        <span class="dp-axis-score">${Number(v).toFixed(1)}</span>
+      </div>
+      <div class="dp-desc">${desc}</div>
+      ${rows || '<div class="dp-desc">재료 없음</div>'}
+    </div>`;
+  }).join('');
+
+  // 점수가 만들어지는 식을 실제 숫자로 보여준다
+  const g = (k) => (ind[k] === '' || ind[k] == null) ? null : Number(ind[k]);
+  const os = g('ax_oversold'), dd = g('ax_drawdown'), fl = g('ax_flow'),
+        tr = g('ax_trend_risk'), rv = g('ax_reversal');
+  let formula = '';
+  if (os != null && dd != null && fl != null) {
+    const base = os * .40 + dd * .35 + fl * .25;
+    const riskAdj = tr != null ? -(tr - 50) * .28 : 0;
+    const revAdj  = rv != null ?  (rv - 50) * .16 : 0;
+    formula = `
+      <div class="dp-formula">
+        <div>기본점수 = 과매도 ${os.toFixed(1)}×0.40 + 낙폭 ${dd.toFixed(1)}×0.35 + 자금 ${fl.toFixed(1)}×0.25
+          = <b>${base.toFixed(1)}</b></div>
+        <div>추세 위험 보정 <b>${riskAdj >= 0 ? '+' : ''}${riskAdj.toFixed(1)}</b>
+             · 반등 조짐 보정 <b>${revAdj >= 0 ? '+' : ''}${revAdj.toFixed(1)}</b>
+             → 원점수 <b>${(base + riskAdj + revAdj).toFixed(1)}</b></div>
+        <div>9단계에 고르게 퍼지도록 분포 보정 → <b style="color:var(--accent);">종목점수 ${ind.stock_score}</b></div>
+      </div>`;
+  }
+
+  const step = ind.dca_step_pct;
+  const isKr = t.market === 'kr';
+  const lv = (n) => {
+    if (t.price == null || !step) return null;
+    const v = t.price * (1 - step * n / 100);
+    return isKr ? Math.round(v) : Math.round(v * 100) / 100;
+  };
+  const cur = isKr ? '₩' : '$';
+  const dca = step ? `
+    <div class="dp-box dp-box-accent">
+      <b>물타기 간격</b> — 이 종목의 일평균 변동폭(ATR)은 ${fmtNum(ind.atr_pct,2,'%')}입니다.
+      그 1.5배인 <b>−${step}%</b>를 한 칸으로 잡으면 하루 등락에 분할매수가 소진되지 않습니다.
+      ${lv(1) ? `다음 매수 지점 <b>${cur}${lv(1).toLocaleString()}</b> · ${cur}${lv(2).toLocaleString()} · ${cur}${lv(3).toLocaleString()}` : ''}
+    </div>` : '';
+
+  const knife = Number(ind.knife) === 1 ? `
+    <div class="dp-box dp-box-warn">
+      <b>떨어지는 칼날 주의</b> — ADX ${fmtNum(ind.adx,1)}로 추세가 뚜렷한데 방향이 아래입니다
+      (DI− ${fmtNum(ind.di_minus,1)} &gt; DI+ ${fmtNum(ind.di_plus,1)}).
+      과매도 신호가 켜져 있어도 추세가 꺾이는 걸 확인한 뒤 담는 편이 낫습니다.
+    </div>` : '';
+
+  return `<tr class="detail-row"><td colspan="${colspan}">
+    <div class="dp-wrap">
+      <div class="dp-grid">${axisBlocks}</div>
+      ${formula}
+      ${knife}${dca}
+      <div class="dp-foot">
+        기준일 ${ind.date || '—'} 종가. 현재가는 따로 갱신되어 기준 시점이 다를 수 있습니다.
+        구글시트와 맞춰 보시려면 시트 방식으로는 RSI ${fmtNum(ind.sheet_rsi,2)},
+        스토캐스틱 %K ${fmtNum(ind.sheet_stoch_k,2)} / %D ${fmtNum(ind.sheet_stoch_d,2)} 입니다.
+      </div>
+    </div>
+  </td></tr>`;
 }
 
 // 종목 하나의 보조지표 전부를 모달로 펼친다.
@@ -3004,10 +3198,13 @@ function renderGroup(group) {
         <td>${tier ? `<span class="signal-badge" style="${badgeStyle}">${tier.label}</span>` : '<span style="color:var(--text-mute);font-size:11px;">지표 필요</span>'}</td>
         <td class="num action-amount" style="color:${actionColor};font-size:12px;">${actionText}</td>
         <td style="white-space:nowrap;">
+          <button class="btn-ghost btn" onclick="toggleDetail(${t.id})" style="padding:4px 8px;font-size:11px;"
+                  title="근거 펼치기">${expanded.has(t.id) ? '▲' : '▼'}</button>
           <button class="btn-ghost btn" onclick="refreshTicker(${t.id})" style="padding:4px 8px;font-size:11px;" title="새로고침">↻</button>
           <button class="btn-danger" onclick="removeTicker(${t.id})" title="삭제">×</button>
         </td>
       </tr>
+      ${expanded.has(t.id) ? detailRow(t, 9) : ''}
     `;
   }).join('');
 }
@@ -4026,6 +4223,29 @@ setTimeout(() => {
 }, 500);
 // 참고 지표는 매크로 응답을 기다리지 않고 데이터가 오는 대로 그린다.
 DS.init().then(renderMacroExtra).catch(() => {});
+
+// 저장된 종목의 시세·지표를 열 때마다 새로 읽는다.
+// 저장하는 건 티커·보유량 같은 사용자 입력뿐이라, 이 과정이 없으면 표가 빈다.
+(async function hydrateTickers() {
+  if (!state.tickers || !state.tickers.length) return;
+  state.tickers.forEach(t => { t.loading = true; });
+  renderGroups();
+  await Promise.all(state.tickers.map(async t => {
+    try {
+      const d = await getQuote(t.ticker, t.market);
+      Object.assign(t, {
+        price: d.price, rsi: d.rsi, high52w: d.high52w, low52w: d.low52w,
+        changeFromLow: d.changeFromLow, changeFromHigh: d.changeFromHigh,
+        ind: d.ind, priceAsOf: d.priceAsOf, changePct: d.changePct,
+        name: d.name || t.name, loading: false, error: null,
+      });
+    } catch (e) {
+      t.loading = false;
+      t.error = e.message;
+    }
+  }));
+  renderGroups();
+})();
 </script>
 </body>
 </html>

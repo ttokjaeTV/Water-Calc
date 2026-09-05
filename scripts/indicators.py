@@ -435,78 +435,81 @@ def _avg(vals):
     return sum(v) / len(v) if v else None
 
 
-def axis_oversold(o: Dict) -> Optional[float]:
+def axis_oversold(o: Dict):
     """단기 오실레이터 네 개의 평균. 넷이 서로 중복이라 합산이 아니라 평균이다."""
-    return _avg([
-        _map(o.get("rsi"),        [(0, 100), (30, 80), (50, 50), (70, 20), (100, 0)]),
-        _map(o.get("stoch_k"),    [(0, 100), (20, 80), (50, 50), (80, 20), (100, 0)]),
-        _map(o.get("cci"),        [(-250, 100), (-100, 80), (0, 50), (100, 20), (250, 0)]),
-        _map(o.get("williams_r"), [(-100, 100), (-80, 80), (-50, 50), (-20, 20), (0, 0)]),
-    ])
+    parts = {
+        "RSI(14)":       _map(o.get("rsi"),        [(0, 100), (30, 80), (50, 50), (70, 20), (100, 0)]),
+        "스토캐스틱 %K":  _map(o.get("stoch_k"),    [(0, 100), (20, 80), (50, 50), (80, 20), (100, 0)]),
+        "CCI(20)":       _map(o.get("cci"),        [(-250, 100), (-100, 80), (0, 50), (100, 20), (250, 0)]),
+        "Williams %R":   _map(o.get("williams_r"), [(-100, 100), (-80, 80), (-50, 50), (-20, 20), (0, 0)]),
+    }
+    return _avg(parts.values()), parts
 
 
-def axis_drawdown(o: Dict) -> Optional[float]:
+def axis_drawdown(o: Dict):
     """얼마나 깊이 눌렸나. 기간이 길수록 임계를 크게 잡는다."""
-    return _avg([
-        _map(o.get("from_high"), [(-60, 100), (-40, 85), (-25, 65), (-10, 35), (0, 5)]),
-        _map(o.get("disp20"),    [(-20, 100), (-10, 80), (-3, 55), (3, 40), (10, 10)]),
-        _map(o.get("disp60"),    [(-30, 100), (-15, 80), (-5, 55), (5, 40), (15, 10)]),
-        _map(o.get("disp120"),   [(-40, 100), (-20, 80), (-7, 55), (7, 40), (20, 10)]),
-        _map(o.get("disp200"),   [(-50, 100), (-25, 80), (-10, 55), (10, 40), (25, 10)]),
-    ])
+    parts = {
+        "52주 고점 대비": _map(o.get("from_high"), [(-60, 100), (-40, 85), (-25, 65), (-10, 35), (0, 5)]),
+        "20일선 이격":    _map(o.get("disp20"),    [(-20, 100), (-10, 80), (-3, 55), (3, 40), (10, 10)]),
+        "60일선 이격":    _map(o.get("disp60"),    [(-30, 100), (-15, 80), (-5, 55), (5, 40), (15, 10)]),
+        "120일선 이격":   _map(o.get("disp120"),   [(-40, 100), (-20, 80), (-7, 55), (7, 40), (20, 10)]),
+        "200일선 이격":   _map(o.get("disp200"),   [(-50, 100), (-25, 80), (-10, 55), (10, 40), (25, 10)]),
+    }
+    return _avg(parts.values()), parts
 
 
-def axis_flow(o: Dict) -> Optional[float]:
+def axis_flow(o: Dict):
     """
     자금이 들어오는지. 낙폭 구간에서 거래량이 터지면 투매(바닥 신호)로 본다.
     OBV 가 우상향이면 파는 사람보다 사는 사람이 많다는 뜻이라 가점.
     """
-    return _avg([
-        _map(o.get("mfi"),        [(0, 100), (20, 80), (50, 50), (80, 20), (100, 0)]),
-        _map(o.get("vol_ratio"),  [(0.3, 35), (1.0, 50), (2.0, 70), (3.5, 85), (6, 90)]),
-        _map(o.get("obv_slope"),  [(-40, 15), (-15, 35), (0, 50), (15, 68), (40, 85)]),
-    ])
+    parts = {
+        "MFI(14)":    _map(o.get("mfi"),       [(0, 100), (20, 80), (50, 50), (80, 20), (100, 0)]),
+        "거래량 비율": _map(o.get("vol_ratio"), [(0.3, 35), (1.0, 50), (2.0, 70), (3.5, 85), (6, 90)]),
+        "OBV 기울기":  _map(o.get("obv_slope"), [(-40, 15), (-15, 35), (0, 50), (15, 68), (40, 85)]),
+    }
+    return _avg(parts.values()), parts
 
 
-def axis_trend_risk(o: Dict) -> Optional[float]:
+def axis_trend_risk(o: Dict):
     """
     떨어지는 칼날인가. 여기만 클수록 나쁘다.
     과매도 신호가 아무리 많아도 하락 추세가 살아 있으면 깎아야 한다.
     """
-    parts = []
+    parts = {}
     adx, pdi, ndi = o.get("adx"), o.get("di_plus"), o.get("di_minus")
     if adx is not None and pdi is not None and ndi is not None:
         # 추세가 강하면서(ADX 높음) 방향이 아래(DI- 우위)일 때만 위험하다.
         strength = _map(adx, [(10, 0), (20, 30), (25, 55), (35, 80), (50, 100)]) or 0
-        parts.append(strength if ndi > pdi else strength * 0.15)
+        parts["ADX / DI"] = strength if ndi > pdi else strength * 0.15
     c = o.get("cross")
     if c is not None:
-        parts.append({"dead_cross": 95, "dead": 70,
-                      "golden_cross": 5, "golden": 20}.get(c, 50))
+        parts["50/200일선"] = {"dead_cross": 95, "dead": 70,
+                               "golden_cross": 5, "golden": 20}.get(c, 50)
     ds = o.get("down_streak")
     if ds is not None:
-        parts.append(_map(float(ds), [(0, 25), (2, 40), (4, 60), (7, 80), (10, 95)]))
+        parts["연속 하락일"] = _map(float(ds), [(0, 25), (2, 40), (4, 60), (7, 80), (10, 95)])
     m60 = o.get("mom60")
     if m60 is not None:
-        parts.append(_map(m60, [(-40, 90), (-20, 70), (0, 45), (20, 25), (40, 10)]))
-    return _avg(parts)
+        parts["60일 모멘텀"] = _map(m60, [(-40, 90), (-20, 70), (0, 45), (20, 25), (40, 10)])
+    return _avg(parts.values()), parts
 
 
-def axis_reversal(o: Dict) -> Optional[float]:
+def axis_reversal(o: Dict):
     """돌아설 조짐. MACD 상향 전환과 볼린저 하단 회복이 핵심."""
-    parts = []
+    parts = {}
     turn, hist = o.get("macd_turn"), o.get("macd_hist")
     if turn == "up":
-        parts.append(95)
+        parts["MACD 전환"] = 95
     elif turn == "down":
-        parts.append(10)
+        parts["MACD 전환"] = 10
     elif hist is not None:
-        parts.append(62 if hist > 0 else 38)
+        parts["MACD 전환"] = 62 if hist > 0 else 38
     pb = o.get("boll_pb")
     if pb is not None:
         # 하단을 막 되밟고 올라오는 0~25% 구간이 가장 좋다.
-        parts.append(_map(pb, [(-20, 60), (0, 85), (20, 75), (50, 50), (80, 25), (110, 15)]))
-    return _avg(parts)
+        parts["볼린저 %B"] = _map(pb, [(-20, 60), (0, 85), (20, 75), (50, 50), (80, 25), (110, 15)])
+    return _avg(parts.values()), parts
 
 
 AXIS_LABEL = {
@@ -540,13 +543,17 @@ def stretch_score(raw: Optional[float]) -> Optional[int]:
 
 
 def compute_axes(o: Dict) -> Dict:
-    ax = {
+    raw_ax = {
         "oversold": axis_oversold(o),
         "drawdown": axis_drawdown(o),
         "flow": axis_flow(o),
         "trend_risk": axis_trend_risk(o),
         "reversal": axis_reversal(o),
     }
+    ax = {k: v[0] for k, v in raw_ax.items()}
+    # 각 축이 어떤 지표를 몇 점으로 환산해 썼는지. 화면에서 근거를 펼쳐 보여준다.
+    parts = {k: {kk: round(vv, 1) for kk, vv in (v[1] or {}).items() if vv is not None}
+             for k, v in raw_ax.items()}
     base_parts, wsum = 0.0, 0.0
     for k, w in AXIS_WEIGHT.items():
         if ax[k] is not None:
@@ -564,6 +571,7 @@ def compute_axes(o: Dict) -> Dict:
 
     raw = max(0, min(100, score))
     return {"axes": {k: (round(v, 1) if v is not None else None) for k, v in ax.items()},
+            "parts": parts,
             "base": round(base, 1),
             "raw": round(raw, 1),
             "score": stretch_score(raw)}
@@ -691,6 +699,7 @@ def compute_all(bars: List[Bar]) -> Dict:
     # 신호 목록(oversold/overbought)은 '왜 이 점수인지' 설명용으로만 남긴다.
     a = compute_axes(out)
     out["axes"] = a["axes"]
+    out["axis_parts"] = a.get("parts")
     out["base_score"] = a.get("base")
     out["raw_score"] = a.get("raw")
     out["stock_score"] = a["score"] if a["score"] is not None else 50
@@ -737,6 +746,10 @@ def to_row(sym: str, name: str, res: Dict) -> Dict:
     r["knife"] = 1 if res.get("knife") else 0
     r["raw_score"] = res.get("raw_score") or ""
     r["dca_step_pct"] = res.get("dca_step_pct") or ""
+    # 축별 재료 기여도 — '이 지표가 어느 축에 몇 점으로 들어갔나'를 화면에서 펼쳐 보여준다.
+    # CSV 는 DictWriter(extrasaction="ignore") 라 이 중첩 키를 무시하고,
+    # 샤드 JSON 은 row 를 통째로 덤프하므로 여기에만 실린다.
+    r["parts"] = res.get("axis_parts") or {}
     return r
 
 
