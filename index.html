@@ -1042,7 +1042,7 @@ body {
     <div class="macro-item kr">
       <button class="refresh-btn" data-refresh="vkospi">🔄</button>
       <div class="macro-label">
-        <span>🟡 VKOSPI (한국 변동성)</span>
+        <span>🟡 VKOSPI (코스피200 변동성)</span>
         <span class="source">KRX</span>
       </div>
       <div class="macro-input-row">
@@ -1076,13 +1076,16 @@ body {
       <div class="explain-item">
         <div class="explain-h">VIX — 미국 변동성 지수 <span class="explain-src">CBOE</span></div>
         <p>S&amp;P500 옵션 가격에서 뽑아낸 <b>앞으로 30일간의 예상 변동폭</b>입니다.
-        시장이 흔들릴 걸로 보면 옵션값이 비싸지고 VIX가 오릅니다.
-        그래서 '공포지수'라고 부릅니다.</p>
+        흔히 '공포지수'라 부르지만 <b>정확히는 변동성 지수</b>입니다 —
+        방향이 아니라 <b>흔들릴 폭</b>을 잽니다.
+        급락장에서 크게 뛰는 경향이 뚜렷해서 공포의 대용으로 쓰일 뿐,
+        원리상 급등할 때도 오를 수 있습니다.</p>
         <p class="explain-scale">
-          <span>~15 평온</span><span>20 경계</span><span>30 공포</span><span>40+ 패닉</span>
+          <span>~15 매우 안정</span><span>20 보통</span><span>30 변동성 확대</span><span>40+ 극심</span>
         </p>
         <p class="explain-note">평상시 12~20 사이입니다. 30을 넘기는 일이 1년에 몇 번 없고,
-        40 위는 2008·2020 같은 국면입니다. <b>높을수록 매수 점수가 올라갑니다.</b></p>
+        40 위는 2008·2020 같은 국면입니다.
+        이 도구는 <b>변동성이 커진 국면에서 담자</b>는 전제를 쓰므로 높을수록 매수 점수가 올라갑니다.</p>
       </div>
 
       <div class="explain-item">
@@ -1099,11 +1102,18 @@ body {
       </div>
 
       <div class="explain-item">
-        <div class="explain-h">VKOSPI — 한국 변동성 지수 <span class="explain-src">KRX</span></div>
-        <p>VIX의 한국판입니다. 코스피200 옵션에서 뽑습니다.
-        국내 종목·국내상장 ETF 그룹에는 VIX 대신 이 값이 쓰입니다.</p>
-        <p class="explain-note">국내는 미국보다 변동성이 구조적으로 조금 높아
-        같은 숫자라도 체감이 다릅니다. 20 안팎이 평상시입니다.</p>
+        <div class="explain-h">VKOSPI — 코스피200 변동성 지수 <span class="explain-src">KRX</span></div>
+        <p>한국거래소가 2009년 4월부터 산출하는 지수로, 코스피200 옵션 가격에
+        <b>공정분산스왑(Fair Variance Swap)</b> 방식을 적용해
+        앞으로 30일간의 예상 변동성을 나타냅니다. VIX와 산출 계열이 같아
+        '한국판 VIX'로 불립니다.</p>
+        <p class="explain-scale">
+          <span>~17 매우 안정</span><span>22 보통</span><span>33 변동성 확대</span><span>45+ 극심</span>
+        </p>
+        <p class="explain-note">VIX와 마찬가지로 <b>공포지수가 아니라 변동성 지수</b>입니다.
+        KRX 해설 기준으로 20선 초반이 안정적인 수준이고 30을 넘으면 변동성이 크다고 봅니다.
+        미국보다 기준선이 조금 위에 있어 이 도구는 VIX와 다른 구간을 씁니다.
+        국내 종목·국내상장 ETF 그룹에 적용됩니다.</p>
       </div>
 
       <div class="explain-item">
@@ -1115,11 +1125,14 @@ body {
           <li><b>코스피 모멘텀</b> — 125일 이동평균 대비 현재 위치 <i>(자동)</i></li>
           <li><b>VKOSPI</b> — 한국 변동성 <i>(자동)</i></li>
           <li><b>코스피 14일 RSI</b> — 지수 자체의 과열·침체 <i>(자동)</i></li>
-          <li><b>외국인 순매수</b> — 수급 <i>(수기 입력)</i></li>
-          <li><b>52주 신고가 비율</b> — 시장 폭 <i>(수기 입력)</i></li>
+          <li><b>외국인 순매수</b> — 최근 5영업일 합계(조 원), 코스피+코스닥 <i>(자동)</i></li>
+          <li><b>52주 신고가 비율</b> — 신고가권 ÷ (신고가권 + 신저가권) <i>(자동)</i></li>
         </ul>
         <p class="explain-note">뒤의 두 가지는 KRX가 2026년부터 전면 로그인제로 바뀌어
-        자동 수집이 막혔습니다. <b>비워두면 나머지 셋으로만 계산합니다</b>(3개 이상이면 산출).
+        한동안 수기 입력이었습니다. 지금은 KRX에 로그인해 외국인 순매수를 직접 받아오고,
+        신고가 비율은 국내 전종목 보조지표에서 <b>52주 고점 −2% 이내</b>와
+        <b>저점 +2% 이내</b> 종목 수를 세어 계산합니다.
+        수집이 실패하면 빈칸으로 두고 나머지로만 산출합니다(3개 이상이면 계산).
         빈 값을 임의로 채우지 않습니다.</p>
       </div>
 
@@ -1377,6 +1390,114 @@ body {
 <div class="step-label">
   <div class="step-line"></div>
   <span class="step-text"><span class="step-en">STEP 05</span> / 매수·익절 가이드</span>
+</div>
+
+<div class="card" style="padding:0;background:transparent;border:none;margin-bottom:24px;">
+  <details class="explain" style="margin-top:0;">
+    <summary>종목 보조지표가 각각 무엇인지 <span class="explain-more">펼쳐보기</span></summary>
+    <div class="explain-body">
+
+      <div class="explain-item">
+        <div class="explain-h">왜 축으로 묶었나</div>
+        <p>지표를 20여 개 계산하지만, 그대로 다 세면 안 됩니다.
+        RSI·스토캐스틱·CCI·Williams %R 은 <b>전부 같은 걸 재는 단기 오실레이터</b>라
+        같이 켜지고 같이 꺼집니다. 실제로 국내 493종목을 재보니
+        스토캐스틱과 Williams %R 이 <b>10번 중 7번은 같이</b> 신호를 냈습니다.
+        네 개를 각각 한 표씩 주면 그 하나가 4표를 갖는 셈입니다.</p>
+        <p class="explain-note">그래서 성격이 겹치는 것끼리 묶어 <b>다섯 개 축</b>을 만들고,
+        축 안에서는 평균을 냅니다. 각 축은 0~100 연속값이라
+        임계값을 아슬아슬하게 넘고 못 넘는 차이로 등급이 뛰지 않습니다.</p>
+      </div>
+
+      <div class="explain-item">
+        <div class="explain-h">① 과매도 강도 <span class="explain-src">가중 40%</span></div>
+        <p>단기적으로 얼마나 눌렸나. 네 지표의 평균입니다.</p>
+        <ul class="explain-list">
+          <li><b>RSI(14)</b> — 최근 14일 상승폭과 하락폭의 비율. 30 아래면 과매도.
+            <i>HTS·트레이딩뷰와 같은 Wilder 방식</i></li>
+          <li><b>스토캐스틱 %K·%D</b> — 최근 14일 고·저 범위에서 종가가 어디쯤인지.
+            둘 다 20 아래면 바닥권</li>
+          <li><b>CCI(20)</b> — 평균가에서 얼마나 멀어졌나. −100 아래면 과매도</li>
+          <li><b>Williams %R(14)</b> — 스토캐스틱을 뒤집은 형태. −80 아래면 과매도</li>
+        </ul>
+      </div>
+
+      <div class="explain-item">
+        <div class="explain-h">② 낙폭 심도 <span class="explain-src">가중 35%</span></div>
+        <p>기간을 달리해 얼마나 깊이 빠졌는지 봅니다.
+        단기 지표만 보면 <b>고점에서 갓 꺾인 종목</b>과
+        <b>1년째 흘러내린 종목</b>을 구분하지 못합니다.</p>
+        <ul class="explain-list">
+          <li><b>52주 고점 대비</b> — 1년 최고가에서 몇 % 내려왔나</li>
+          <li><b>이격도 20·60·120·200일</b> — 각 이동평균선 대비 현재가 위치.
+            기간이 길수록 임계를 크게 잡습니다</li>
+        </ul>
+      </div>
+
+      <div class="explain-item">
+        <div class="explain-h">③ 자금 흐름 <span class="explain-src">가중 25%</span></div>
+        <p>가격만이 아니라 <b>거래량이 뭘 말하는지</b> 봅니다.
+        낙폭 구간에서 거래량이 터지면 투매가 나온 것이고, 바닥 신호일 때가 많습니다.</p>
+        <ul class="explain-list">
+          <li><b>MFI(14)</b> — 거래량을 가중한 RSI. 돈이 실린 하락인지 구분</li>
+          <li><b>거래량 비율</b> — 20일 평균 대비 오늘 거래량. 1.0이 평소</li>
+          <li><b>OBV 기울기</b> — 매수·매도 거래량 누적의 방향. 우상향이면 자금 유입</li>
+        </ul>
+      </div>
+
+      <div class="explain-item">
+        <div class="explain-h">④ 반등 조짐 <span class="explain-src">가점</span></div>
+        <p>돌아설 낌새가 있는지. 있으면 점수를 올립니다.</p>
+        <ul class="explain-list">
+          <li><b>MACD 히스토그램 전환</b> — 단기·장기 이동평균 간격이
+            좁아지다 벌어지기 시작하는 순간. 음수에서 양수로 넘어가면 단기 반등 신호</li>
+          <li><b>볼린저 %B</b> — 밴드 안에서의 위치. 하단을 이탈했다가
+            되밟고 올라오는 구간을 가장 좋게 봅니다</li>
+        </ul>
+      </div>
+
+      <div class="explain-item">
+        <div class="explain-h">⑤ 추세 위험 <span class="explain-src">감점</span></div>
+        <p>이 축만 <b>클수록 나쁩니다.</b> 과매도 신호가 아무리 많아도
+        하락 추세가 살아 있으면 떨어지는 칼날입니다.</p>
+        <ul class="explain-list">
+          <li><b>ADX / DI+ / DI−</b> — ADX는 추세의 세기, DI는 방향.
+            <b>ADX 25 이상인데 DI−가 DI+보다 크면</b> 강한 하락 추세라
+            표에 경고를 띄우고 점수를 깎습니다</li>
+          <li><b>골든/데드크로스</b> — 50일선과 200일선의 위치 관계</li>
+          <li><b>연속 하락일</b> · <b>60일 모멘텀</b> — 흐름이 계속 아래인지</li>
+        </ul>
+      </div>
+
+      <div class="explain-item">
+        <div class="explain-h">ATR — 물타기 간격을 정하는 자</div>
+        <p>ATR은 <b>하루 평균 몇 %씩 움직이는 종목인가</b>를 나타냅니다.
+        국내 종목을 재보니 <b>0.1%부터 27%까지</b> 벌어졌습니다.
+        모든 종목을 −5%마다 담으면, 변동성 큰 종목은 하루 만에 분할매수가 다 소진됩니다.</p>
+        <p class="explain-note">그래서 종목별로 <b>ATR의 1.5배</b>를 한 칸으로 잡아
+        다음 매수 지점을 제안합니다. 종목명 옆 지표를 누르면 나옵니다.</p>
+      </div>
+
+      <div class="explain-item">
+        <div class="explain-h">점수가 어떻게 합쳐지나</div>
+        <p>세 축이 본체이고, 위험은 빼고 반등은 더합니다.</p>
+        <p class="explain-note" style="font-family:var(--font-sans);">
+          기본점수 = 과매도×0.40 + 낙폭×0.35 + 자금×0.25<br>
+          종목점수 = 기본점수 − (추세위험−50)×0.28 + (반등−50)×0.16
+        </p>
+        <p class="explain-note">축을 평균 내면 값이 가운데로 몰리는 성질이 있어,
+        마지막에 분포를 펴서 9단계 등급에 고르게 배치합니다.
+        이 종목점수가 <b>종목층</b>이 되고, 위의 매크로가 <b>시장층</b>이 되어
+        종합점수를 만듭니다.</p>
+      </div>
+
+      <p class="explain-foot">
+        보조지표는 <b>전일 종가</b> 기준으로 하루 한 번 계산됩니다.
+        현재가는 따로 갱신되므로 장중에는 둘의 기준 시점이 다를 수 있습니다.
+        임계값을 넘은 개별 신호는 지표를 눌러 모달에서 확인할 수 있습니다.
+      </p>
+    </div>
+  </details>
 </div>
 
 <!-- GUIDE -->
@@ -2200,6 +2321,17 @@ function signalCell(t) {
   if (!ind) {
     return `<div style="font-size:11px;color:var(--ink-mute);">지표 없음</div>`;
   }
+  // 5축 개편 이전에 만들어진 데이터가 남아 있을 수 있다.
+  // 그때는 막대 대신 예전 방식(RSI + 과매도 개수)으로라도 보여준다.
+  const hasAxes = AXES.some(([k]) => ind[k] !== '' && ind[k] != null);
+  if (!hasAxes) {
+    const n = Number(ind.oversold_n || 0);
+    return `<div style="cursor:pointer;" onclick="showIndicators(${t.id})">
+      <div style="font-weight:800;">${t.rsi != null ? t.rsi.toFixed(1) : '—'}</div>
+      <div style="font-size:10px;color:var(--ink-mute);">과매도 ${n}개 · 📊</div>
+      <div style="font-size:9px;color:var(--accent);margin-top:2px;">5축 갱신 대기</div>
+    </div>`;
+  }
   const bars = AXES.map(([k, label, color]) => {
     const v = ind[k];
     if (v === '' || v == null) return '';
@@ -2467,20 +2599,29 @@ function getTier(s) { if (s==null) return null; return TIERS.find(t => s>=t.min 
 // ============================================================
 // INTERPRET
 // ============================================================
-function interpretVix(v) {
+// VIX·VKOSPI 는 '공포지수'가 아니라 변동성 지수다. 방향이 아니라 폭을 잰다.
+// 급락장에서 크게 오르는 역상관 때문에 공포지수라는 별명이 붙었을 뿐,
+// 값이 낮다고 '탐욕'인 것이 아니라 그냥 조용한 것이다. 그래서 라벨을
+// 변동성 표현으로 쓴다. 점수 환산(vixScore)은 그대로 유지된다 —
+// 변동성이 커진 국면에서 담자는 전제 자체는 바뀌지 않기 때문이다.
+function interpretVol(v, kind) {
   if (v==null||isNaN(v)) return '';
+  // VKOSPI 는 국내 변동성이 구조적으로 조금 높아 기준선을 따로 둔다.
+  // KRX 해설 기준: 20선 초반이 안정, 30 초과면 변동성이 크다고 본다.
+  const T = kind === 'vkospi' ? [45,33,27,22,17] : [40,30,25,20,15];
   let cls, label;
-  if (v>=40) { cls='extreme-fear'; label='🔥 극단적 공포'; }
-  else if (v>=30) { cls='fear'; label='😱 공포'; }
-  else if (v>=25) { cls='neutral'; label='😨 경계'; }
-  else if (v>=20) { cls='neutral'; label='😐 평균'; }
-  else if (v>=15) { cls='greed'; label='😌 안정'; }
-  else { cls='extreme-greed'; label='😎 탐욕'; }
-  // VIX를 0~100 스케일로 변환 (0~50 범위를 0~100%로)
-  const pct = Math.min(100, Math.max(0, (v / 50) * 100));
+  if (v>=T[0])      { cls='extreme-fear';  label='극심한 변동'; }
+  else if (v>=T[1]) { cls='fear';          label='변동성 확대'; }
+  else if (v>=T[2]) { cls='neutral';       label='경계'; }
+  else if (v>=T[3]) { cls='neutral';       label='보통'; }
+  else if (v>=T[4]) { cls='greed';         label='안정'; }
+  else              { cls='extreme-greed'; label='매우 안정'; }
+  const pct = Math.min(100, Math.max(0, (v / (kind==='vkospi'?55:50)) * 100));
   return `<span class="status-badge ${cls}">${label}</span>
     <div class="mini-gauge"><div class="mini-gauge-marker" style="left:calc(${pct}% - 1.5px);"></div></div>`;
 }
+function interpretVix(v)    { return interpretVol(v, 'vix'); }
+function interpretVkospi(v) { return interpretVol(v, 'vkospi'); }
 function interpretFG(v) {
   if (v==null||isNaN(v)) return '';
   let cls, label;
@@ -3345,7 +3486,7 @@ async function refreshMacro(key) {
     if (key === 'vkospi' && data.vkospi) {
       state.vkospi = data.vkospi.value;
       document.getElementById('vkospi').value = data.vkospi.value;
-      document.getElementById('vkospi-interpret').innerHTML = interpretVix(data.vkospi.value);
+      document.getElementById('vkospi-interpret').innerHTML = interpretVkospi(data.vkospi.value);
     }
     saveState();
     renderGroups();
@@ -3375,7 +3516,7 @@ async function autoLoadMacrosOnEntry() {
       if (macros.vkospi) { 
         state.vkospi = macros.vkospi.value; 
         document.getElementById('vkospi').value = macros.vkospi.value;
-        document.getElementById('vkospi-interpret').innerHTML = interpretVix(macros.vkospi.value);
+        document.getElementById('vkospi-interpret').innerHTML = interpretVkospi(macros.vkospi.value);
       }
     }
     
@@ -3425,7 +3566,7 @@ async function refreshAll() {
     const macros = await apiCall('/api/macros');
     if (macros.vix) { state.vix = macros.vix.value; document.getElementById('vix').value = macros.vix.value; document.getElementById('vix-interpret').innerHTML = interpretVix(macros.vix.value); }
     if (macros.cnnFearGreed) { state['cnn-fg'] = macros.cnnFearGreed.value; document.getElementById('cnn-fg').value = macros.cnnFearGreed.value; document.getElementById('cnn-fg-interpret').innerHTML = interpretFG(macros.cnnFearGreed.value); }
-    if (macros.vkospi) { state.vkospi = macros.vkospi.value; document.getElementById('vkospi').value = macros.vkospi.value; document.getElementById('vkospi-interpret').innerHTML = interpretVix(macros.vkospi.value); }
+    if (macros.vkospi) { state.vkospi = macros.vkospi.value; document.getElementById('vkospi').value = macros.vkospi.value; document.getElementById('vkospi-interpret').innerHTML = interpretVkospi(macros.vkospi.value); }
     
     // 2. 똑재 공포탐욕지수 5개 지표 자동 수집 & 계산
     try {
@@ -3645,7 +3786,7 @@ document.getElementById('todayDate').textContent = new Date().toLocaleDateString
 // Macro inputs
 setupMacroInput('vix', 'vix', interpretVix);
 setupMacroInput('cnn-fg', 'cnn-fg', interpretFG);
-setupMacroInput('vkospi', 'vkospi', interpretVix);
+setupMacroInput('vkospi', 'vkospi', interpretVkospi);
 setupMacroInput('kospi-fg', 'kospi-fg', interpretFG);
 
 // Refresh buttons
@@ -3705,7 +3846,7 @@ renderGroups();
   const configs = [
     { id: 'vix', stateKey: 'vix', fn: interpretVix },
     { id: 'cnn-fg', stateKey: 'cnn-fg', fn: interpretFG },
-    { id: 'vkospi', stateKey: 'vkospi', fn: interpretVix },
+    { id: 'vkospi', stateKey: 'vkospi', fn: interpretVkospi },
     { id: 'kospi-fg', stateKey: 'kospi-fg', fn: interpretFG },
   ];
   configs.forEach(({ id, stateKey, fn }) => {

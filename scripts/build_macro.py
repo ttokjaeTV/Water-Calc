@@ -14,6 +14,7 @@
 import os
 import re
 import sys
+import csv
 import json
 import datetime
 
@@ -98,6 +99,65 @@ def kospi_fg():
     }
 
 
+def foreign_net_buy():
+    """
+    외국인 순매수 — 최근 5영업일 합계(조 원). 똑재 공포탐욕지수 네 번째 재료.
+
+    KRX 정보데이터시스템은 2026년부터 전면 로그인제라 예전엔 수기 입력이었다.
+    자격증명이 있으면 자동으로 받아온다. 없으면 None 을 돌려주고
+    화면에서 수기 입력을 받는다 — 지어내지 않는다.
+    """
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import krx_auth
+    if not krx_auth.login():
+        raise RuntimeError("KRX 로그인 불가 (자격증명 또는 pykrx 없음)")
+
+    from pykrx import stock
+    end = datetime.date.today()
+    start = end - datetime.timedelta(days=20)
+    f = lambda d: d.strftime("%Y%m%d")
+
+    total, detail = 0.0, {}
+    for mkt in ("KOSPI", "KOSDAQ"):
+        df = stock.get_market_trading_value_by_date(f(start), f(end), mkt, on="외국인")
+        col = [c for c in df.columns if "외국인" in c]
+        if not col or df.empty:
+            continue
+        v = float(df[col[0]].tail(5).sum()) / 1e12   # 조 원
+        detail[mkt] = round(v, 3)
+        total += v
+    if not detail:
+        raise ValueError("외국인 순매수 응답 없음")
+    return {"value": round(total, 2), "unit": "조원", "days": 5, "byMarket": detail}
+
+
+def high_low_ratio():
+    """
+    52주 신고가 비율 — 똑재 공포탐욕지수 다섯 번째 재료.
+
+    KRX 를 뒤질 필요가 없다. 이미 국내 전종목 보조지표를 만들면서
+    52주 고점·저점 대비 위치를 다 계산해 뒀기 때문이다.
+    CNN 공포탐욕지수의 '신고가·신저가' 항목과 같은 방식으로 센다.
+    """
+    path = os.path.join(C.DATA, "indicators_kr.csv")
+    if not os.path.exists(path):
+        raise FileNotFoundError("indicators_kr.csv 없음 — 국내 지표를 먼저 만들어야 한다")
+    hi = lo = 0
+    with open(path, encoding="utf-8-sig") as f:
+        for r in csv.DictReader(f):
+            try:
+                if r["from_high"] and float(r["from_high"]) >= -2:
+                    hi += 1
+                if r["from_low"] and float(r["from_low"]) <= 2:
+                    lo += 1
+            except ValueError:
+                continue
+    if hi + lo == 0:
+        raise ValueError("신고가·신저가 종목이 하나도 없다")
+    return {"value": round(hi / (hi + lo) * 100, 1),
+            "high": hi, "low": lo, "basis": "국내 전종목 52주 고·저 대비 ±2%"}
+
+
 def credit_spread():
     """
     하이일드 신용 스프레드의 대용치.
@@ -141,6 +201,8 @@ def build_macro():
         ("vkospi", vkospi),
         ("kospiFG", kospi_fg),
         ("creditSpread", credit_spread),
+        ("foreignNetBuy", foreign_net_buy),
+        ("highLowRatio", high_low_ratio),
     ]:
         try:
             m[key] = fn()

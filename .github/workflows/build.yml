@@ -63,12 +63,18 @@ jobs:
           echo "mode=$M" >> $GITHUB_OUTPUT
           echo "이번 실행 범위: $M"
 
+      - name: 엔진 버전 (캐시 무효화용)
+        id: eng
+        run: echo "h=${{ hashFiles('scripts/indicators.py') }}" >> $GITHUB_OUTPUT
+
+      # 캐시 키에 엔진 해시를 넣는다. indicators.py 를 고치면 캐시가 미스나고,
+      # 옛 형식으로 계산된 데이터를 그대로 얹어 배포하는 사고를 막는다.
       - name: 직전 데이터 복원
         uses: actions/cache/restore@v4
         with:
           path: data
-          key: waterdata-
-          restore-keys: waterdata-
+          key: waterdata-${{ steps.eng.outputs.h }}-
+          restore-keys: waterdata-${{ steps.eng.outputs.h }}-
 
       - name: 미국 전종목 보조지표
         if: steps.mode.outputs.mode == 'full'
@@ -88,12 +94,14 @@ jobs:
         if: steps.mode.outputs.mode != 'deploy' || hashFiles('data/macro.json') == ''
         run: python scripts/build_macro.py
 
-      - name: 캐시가 비어 있으면 지표도 수집
+      # 엔진을 고쳤거나 캐시가 만료되면 여기로 온다. 일부만 새 형식이면
+      # 화면이 반쪽이 되므로 축소하지 않고 전종목을 다시 만든다.
+      - name: 캐시가 비었으면 전종목 재계산
         if: steps.mode.outputs.mode == 'deploy' && hashFiles('data/kr/*.json') == ''
         run: |
-          echo "캐시에 지표가 없다. 최소한의 세트를 만든다."
-          LIMIT=800 python scripts/build_kr_indicators.py || true
-          LIMIT=800 python scripts/build_us_indicators.py || true
+          echo "캐시 없음 (엔진 변경 또는 만료) — 전종목을 다시 계산한다."
+          python scripts/build_kr_indicators.py
+          python scripts/build_us_indicators.py
         env:
           WORKERS: '10'
 
@@ -106,7 +114,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: data
-          key: waterdata-${{ github.run_id }}
+          key: waterdata-${{ steps.eng.outputs.h }}-${{ github.run_id }}
 
       - name: 사이트 묶기
         run: |
