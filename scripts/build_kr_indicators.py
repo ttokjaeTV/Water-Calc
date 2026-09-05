@@ -54,8 +54,29 @@ def load_etfs():
         return []
 
 
+def load_stocks_from_repo():
+    """
+    portfolio-sheet-data 가 이미 만들어 두는 국내 개별주식 목록.
+
+    KIND 상장법인목록보다 이걸 먼저 쓰는 이유는 우선주가 들어 있어서다.
+    KIND 는 '법인' 목록이라 삼성전자(005930)는 있어도 삼성전자우(005935)는 없다.
+    네이버는 우선주 일봉을 정상적으로 주는데 유니버스에 없어서 수집이 빠졌었다.
+    """
+    url = "https://ttokjaetv.github.io/portfolio-sheet-data/data/kr_stocks.csv"
+    raw = C.http_get(url, C.NAVER_HEADERS, timeout=60).decode("utf-8-sig", "replace")
+    out = []
+    for row in csv.DictReader(io.StringIO(raw)):
+        code = (row.get("종목코드") or "").strip()
+        name = (row.get("종목명") or "").strip()
+        market = (row.get("시장") or "").strip()
+        if re.fullmatch(r"[0-9A-Z]{6}", code):
+            out.append((code, name, "코스닥" if "코스닥" in market else "유가"))
+    print(f"  개별주식 유니버스(포트폴리오 레포): {len(out)}종목")
+    return out
+
+
 def load_stocks():
-    """KIND 상장법인목록은 EUC-KR HTML 표다."""
+    """KIND 상장법인목록은 EUC-KR HTML 표다. 우선주가 빠져 있어 폴백으로만 쓴다."""
     try:
         raw = C.http_get(KIND, C.NAVER_HEADERS, timeout=90)
         html = raw.decode("euc-kr", "replace")
@@ -78,7 +99,14 @@ def load_stocks():
 
 
 def load_universe():
-    uni = load_etfs() + load_stocks()
+    # 개별주식은 포트폴리오 레포 목록(우선주 포함)을 먼저 쓰고,
+    # 실패하면 KIND 로 떨어진다.
+    try:
+        stocks = load_stocks_from_repo()
+    except Exception as e:
+        print(f"  포트폴리오 레포 목록 실패({type(e).__name__}) → KIND 로 대체")
+        stocks = load_stocks()
+    uni = load_etfs() + stocks
     # 코드 중복 제거 (ETF 우선)
     seen, out = set(), []
     for c, n, k in uni:
