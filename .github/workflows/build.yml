@@ -117,6 +117,14 @@ jobs:
         env:
           WORKERS: '10'
 
+      # 매크로 5년 시계열. 소스가 무거워 매크로와 분리하고,
+      # 실패해도 전체를 세우지 않는다 (차트만 안 보일 뿐이다).
+      - name: 매크로 5년 시계열
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+        run: python scripts/build_history.py || echo "시계열 생성 실패 — 차트는 생략된다"
+
       - name: 산출물 점검
         run: |
           ls -la data/ || true

@@ -315,6 +315,15 @@ body {
 /* ── 접이식 설명 (details/summary) ──────────────────
    기본은 접혀 있다. 처음 보는 사람에게는 필요하고
    매일 쓰는 사람에게는 방해가 되기 때문이다. */
+.chart-btn {
+  position: absolute; top: 12px; right: 40px;
+  background: var(--white); border: 1px solid var(--border);
+  color: var(--ink-mute); border-radius: 999px;
+  padding: 2px 9px; font-size: 11px; font-weight: 800;
+  cursor: pointer; line-height: 1.6;
+}
+.chart-btn:hover { border-color: var(--accent); color: var(--accent); }
+
 .explain {
   margin-top: 10px;
   border: 1px solid var(--border);
@@ -1106,6 +1115,7 @@ body {
   <div class="card-subtitle">앞의 둘은 미국 그룹, 뒤의 둘은 국내 그룹에 적용됩니다</div>
   <div class="macro-grid">
     <div class="macro-item us">
+      <button class="chart-btn" data-chart="vix" title="5년 추이 보기">추이</button>
       <button class="refresh-btn" data-refresh="vix" title="다시 받아오기">↻</button>
       <div class="macro-label">
         <span>VIX · 미국 변동성</span>
@@ -1118,6 +1128,7 @@ body {
       <div class="macro-interpret" id="vix-interpret"></div>
     </div>
     <div class="macro-item us">
+      <button class="chart-btn" data-chart="cnn-fg" title="5년 추이 보기">추이</button>
       <button class="refresh-btn" data-refresh="cnn-fg" title="다시 받아오기">↻</button>
       <div class="macro-label">
         <span>CNN 공포탐욕지수</span>
@@ -1130,6 +1141,7 @@ body {
       <div class="macro-interpret" id="cnn-fg-interpret"></div>
     </div>
     <div class="macro-item kr">
+      <button class="chart-btn" data-chart="vkospi" title="5년 추이 보기">추이</button>
       <button class="refresh-btn" data-refresh="vkospi" title="다시 받아오기">↻</button>
       <div class="macro-label">
         <span>VKOSPI · 코스피200 변동성</span>
@@ -1142,6 +1154,7 @@ body {
       <div class="macro-interpret" id="vkospi-interpret"></div>
     </div>
     <div class="macro-item kr">
+      <button class="chart-btn" data-chart="ttokjae-fg" title="5년 추이 보기">추이</button>
       <button class="refresh-btn" data-refresh="ttokjae-fg" title="다시 받아오기">↻</button>
       <div class="macro-label">
         <span>똑재 공포탐욕지수</span>
@@ -1994,6 +2007,7 @@ const DS = {
   macro: null,
   bubble: null,
   pending: { us: {}, kr: {} },   // 신규상장 등 일봉 부족 종목
+  history: null,                 // 매크로 5년 시계열
   errors: [],
 };
 
@@ -2079,6 +2093,11 @@ DS.loadPending = async function() {
   }));
 };
 
+DS.loadHistory = async function() {
+  try { DS.history = await fetchJson(`${DATA_BASE}/history.json`, 30000); }
+  catch (e) { DS.history = { series: {}, notes: {} }; }
+};
+
 DS.loadMacro = async function() {
   try { DS.macro = await fetchJson(`${DATA_BASE}/macro.json`); }
   catch (e) { DS.errors.push(`macro.json: ${e.message}`); }
@@ -2089,7 +2108,7 @@ DS.loadMacro = async function() {
 DS.init = function() {
   if (DS.loading) return DS.loading;
   DS.loading = (async () => {
-    await Promise.all([DS.loadPrices(), DS.loadMacro(), DS.loadPending()]);
+    await Promise.all([DS.loadPrices(), DS.loadMacro(), DS.loadPending(), DS.loadHistory()]);
     DS.ready = true;
     if (DS.errors.length) console.warn('데이터 로드 경고', DS.errors);
   })();
@@ -2735,6 +2754,147 @@ function plBadge(t) {
   const up = pct >= 0;
   return `<span class="pct-badge ${up ? 'pct-up' : 'pct-down'}"
     title="평단 ${t.market === 'kr' ? '₩' : '$'}${t.avgPrice.toLocaleString()}">${up ? '+' : ''}${pct.toFixed(1)}%</span>`;
+}
+
+// ============================================================
+// 매크로 지표 5년 차트
+// ------------------------------------------------------------
+// 카드를 누르면 '지금이 역사적으로 어디쯤인가' 를 보여준다.
+// 외부 차트 라이브러리 없이 SVG 로 직접 그린다 — CDN 하나 줄인다.
+// ============================================================
+
+const HIST_META = {
+  'vix':      { label: 'VIX · 미국 변동성',  color: '#D9542B', lo: 0,  hi: 60,  bands: [[0,15,'매우 안정'],[15,20,'보통'],[20,30,'경계'],[30,60,'변동성 확대']] },
+  'cnn-fg':   { label: 'CNN 공포탐욕지수',   color: '#8B6F47', lo: 0,  hi: 100, bands: [[0,25,'극한 공포'],[25,45,'공포'],[45,55,'중립'],[55,75,'탐욕'],[75,100,'극한 탐욕']] },
+  'kospi-fg': { label: '똑재 공포탐욕지수',  color: '#3F6B4A', lo: 0,  hi: 100, bands: [[0,25,'극한 공포'],[25,45,'공포'],[45,55,'중립'],[55,75,'탐욕'],[75,100,'극한 탐욕']] },
+  'vkospi':   { label: 'VKOSPI · 코스피200 변동성', color: '#B8813F', lo: 0, hi: 60, bands: [] },
+};
+
+function sparkPath(pts, w, h, lo, hi, pad = 6) {
+  if (!pts.length) return '';
+  const n = pts.length;
+  const sx = (i) => pad + (w - pad * 2) * (n === 1 ? 0.5 : i / (n - 1));
+  const sy = (v) => h - pad - (h - pad * 2) * ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo));
+  return pts.map((p, i) => `${i ? 'L' : 'M'}${sx(i).toFixed(1)},${sy(p[1]).toFixed(1)}`).join('');
+}
+
+function showMacroChart(key) {
+  const meta = HIST_META[key];
+  const hist = DS.history || {};
+  const all = (hist.series || {})[key] || [];
+  const note = (hist.notes || {})[key] || '';
+  const cur = currentMacroValue(key);
+
+  if (!all.length) {
+    openModal(meta.label, `
+      <p style="font-size: 15px;line-height:1.9;color:var(--ink-soft);">
+        이 지표는 <b>과거 시계열을 만들 수 없었습니다.</b>
+      </p>
+      <div style="margin-top:12px;padding:14px 16px;border-radius:12px;
+                  background:var(--bg-alt);font-size: 14px;line-height:1.8;color:var(--ink-soft);">
+        ${note || '소스가 현재값만 제공합니다.'}
+      </div>
+      ${cur != null ? `<div style="margin-top:14px;font-size: 15px;">
+        현재값 <b style="font-size: 22px;color:${meta.color};">${cur}</b></div>` : ''}`);
+    return;
+  }
+
+  const ranges = [['1Y', 250], ['3Y', 750], ['5Y', 99999]];
+  const html = `
+    <div id="mc-wrap" data-key="${key}">
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        ${cur != null ? `<span style="font-size: 30px;font-weight:800;color:${meta.color};">${cur}</span>` : ''}
+        <span style="font-size: 13px;color:var(--ink-mute);" id="mc-pos"></span>
+        <span style="margin-left:auto;display:flex;gap:6px;">
+          ${ranges.map(([lb, n], i) =>
+            `<button class="btn-ghost btn mc-range" data-n="${n}"
+              style="padding:4px 12px;font-size: 12px;${i === ranges.length - 1 ? 'border-color:var(--accent);color:var(--accent);' : ''}">${lb}</button>`).join('')}
+        </span>
+      </div>
+      <div id="mc-chart"></div>
+      <div style="margin-top:12px;font-size: 12px;color:var(--ink-mute);line-height:1.75;">${note}</div>
+    </div>`;
+  openModal(meta.label, html);
+  drawMacroChart(key, 99999);
+
+  document.querySelectorAll('.mc-range').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.mc-range').forEach(x => {
+        x.style.borderColor = ''; x.style.color = '';
+      });
+      b.style.borderColor = 'var(--accent)'; b.style.color = 'var(--accent)';
+      drawMacroChart(key, Number(b.dataset.n));
+    });
+  });
+}
+
+function drawMacroChart(key, take) {
+  const meta = HIST_META[key];
+  const all = ((DS.history || {}).series || {})[key] || [];
+  const pts = all.slice(Math.max(0, all.length - take));
+  const el = document.getElementById('mc-chart');
+  if (!el || !pts.length) return;
+
+  const W = 760, H = 260;
+  const vals = pts.map(p => p[1]);
+  let lo = Math.min(meta.lo, Math.min(...vals));
+  let hi = Math.max(...vals);
+  hi = Math.min(meta.hi, hi * 1.08);
+  if (hi <= lo) hi = lo + 1;
+
+  const sy = (v) => H - 6 - (H - 12) * ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo));
+  const cur = currentMacroValue(key);
+
+  // 구간 배경 — 지금 값이 어느 국면인지 색으로 먼저 보인다
+  const bands = (meta.bands || []).map(([a, b, lbl]) => {
+    const y1 = sy(Math.min(b, hi)), y2 = sy(Math.max(a, lo));
+    if (y2 - y1 < 1) return '';
+    const mid = (a + b) / 2;
+    const alpha = key === 'vix' ? (a >= 30 ? .13 : a >= 20 ? .08 : .05)
+                                : (mid <= 25 ? .13 : mid >= 75 ? .12 : .05);
+    const col = key === 'vix' ? '#A03D1F' : (mid <= 45 ? '#3F6B4A' : mid >= 55 ? '#A03D1F' : '#C4A57B');
+    return `<rect x="0" y="${y1}" width="${W}" height="${y2 - y1}" fill="${col}" opacity="${alpha}"/>
+            <text x="${W - 6}" y="${y1 + 13}" text-anchor="end" font-size="10.5"
+                  fill="var(--ink-mute)" font-weight="700">${lbl}</text>`;
+  }).join('');
+
+  // 현재값 기준선
+  const curLine = cur != null && cur >= lo && cur <= hi
+    ? `<line x1="0" y1="${sy(cur)}" x2="${W}" y2="${sy(cur)}"
+             stroke="${meta.color}" stroke-width="1.5" stroke-dasharray="4 3" opacity=".75"/>`
+    : '';
+
+  const path = sparkPath(pts, W, H, lo, hi);
+  const area = `${path}L${W - 6},${H - 6}L6,${H - 6}Z`;
+
+  // 지금 값이 이 기간에서 몇 퍼센타일인지 — '역사적으로 어디쯤' 의 답
+  if (cur != null) {
+    const below = vals.filter(v => v <= cur).length;
+    const pct = Math.round(below / vals.length * 100);
+    const posEl = document.getElementById('mc-pos');
+    if (posEl) posEl.textContent =
+      `이 기간 ${pts.length}일 중 하위 ${pct}% 지점 · 최저 ${Math.min(...vals).toFixed(1)} / 최고 ${Math.max(...vals).toFixed(1)}`;
+  }
+
+  el.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;
+         background:var(--white);border:1px solid var(--border);border-radius:12px;">
+      ${bands}
+      <path d="${area}" fill="${meta.color}" opacity=".10"/>
+      <path d="${path}" fill="none" stroke="${meta.color}" stroke-width="1.8"
+            stroke-linejoin="round" stroke-linecap="round"/>
+      ${curLine}
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size: 11px;
+                color:var(--ink-mute);margin-top:5px;font-weight:700;">
+      <span>${pts[0][0]}</span><span>${pts[pts.length - 1][0]}</span>
+    </div>`;
+}
+
+function currentMacroValue(key) {
+  const m = { 'vix': state.vix, 'cnn-fg': state['cnn-fg'],
+              'vkospi': state.vkospi, 'kospi-fg': state['kospi-fg'] }[key];
+  return (m == null || isNaN(m)) ? null : Number(m);
 }
 
 // 표에서 행을 펼쳐 근거를 보여준다. 모달보다 맥락이 유지된다.
@@ -4327,6 +4487,14 @@ document.getElementById('import-csv-file').addEventListener('change', (e) => {
 document.getElementById('clear-history-btn').addEventListener('click', clearHistory);
 
 // 포트폴리오 관리시트 파일 불러오기
+// 매크로 카드의 '추이' 버튼 → 5년 차트 모달
+document.querySelectorAll('.chart-btn').forEach(b => {
+  b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showMacroChart(b.dataset.chart);
+  });
+});
+
 document.getElementById('import-portfolio-btn').addEventListener('click', () => {
   document.getElementById('import-portfolio-file').click();
 });
