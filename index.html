@@ -450,6 +450,7 @@ body {
   white-space: nowrap;
 }
 .macro-input-row { display: flex; align-items: baseline; gap: 8px; }
+.macro-input[readonly] { cursor: pointer; }
 .macro-input {
   background: transparent; border: none; color: var(--text);
   font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-size: 26px;
@@ -1112,7 +1113,7 @@ body {
 <!-- MACRO INDICATORS (4 in one block) -->
 <div class="card">
   <div class="card-title">매크로 지표 (하루 4회 자동 갱신)</div>
-  <div class="card-subtitle">앞의 둘은 미국 그룹, 뒤의 둘은 국내 그룹에 적용됩니다</div>
+  <div class="card-subtitle">앞의 둘은 미국 그룹, 뒤의 둘은 국내 그룹에 적용됩니다 · 값은 자동 수집이라 수정할 수 없고, 누르면 추이가 열립니다</div>
   <div class="macro-grid">
     <div class="macro-item us">
       <button class="chart-btn" data-chart="vix" title="5년 추이 보기">추이</button>
@@ -1122,7 +1123,7 @@ body {
         <span class="source">CBOE</span>
       </div>
       <div class="macro-input-row">
-        <input type="number" step="0.01" class="macro-input" id="vix" placeholder="미입력">
+        <input type="number" step="0.01" class="macro-input" id="vix" readonly title="자동 수집 값입니다. 눌러서 추이를 보세요." placeholder="미입력">
         <span class="macro-range">~80</span>
       </div>
       <div class="macro-interpret" id="vix-interpret"></div>
@@ -1135,7 +1136,7 @@ body {
         <span class="source">CNN</span>
       </div>
       <div class="macro-input-row">
-        <input type="number" step="1" min="0" max="100" class="macro-input" id="cnn-fg" placeholder="미입력">
+        <input type="number" step="1" min="0" max="100" class="macro-input" id="cnn-fg" readonly title="자동 수집 값입니다. 눌러서 추이를 보세요." placeholder="미입력">
         <span class="macro-range">0~100</span>
       </div>
       <div class="macro-interpret" id="cnn-fg-interpret"></div>
@@ -1148,7 +1149,7 @@ body {
         <span class="source">KRX</span>
       </div>
       <div class="macro-input-row">
-        <input type="number" step="0.01" class="macro-input" id="vkospi" placeholder="미입력">
+        <input type="number" step="0.01" class="macro-input" id="vkospi" readonly title="자동 수집 값입니다. 눌러서 추이를 보세요." placeholder="미입력">
         <span class="macro-range">~80</span>
       </div>
       <div class="macro-interpret" id="vkospi-interpret"></div>
@@ -1161,7 +1162,7 @@ body {
         <span class="source">자체 산출</span>
       </div>
       <div class="macro-input-row">
-        <input type="number" step="1" min="0" max="100" class="macro-input" id="kospi-fg" placeholder="미입력">
+        <input type="number" step="1" min="0" max="100" class="macro-input" id="kospi-fg" readonly title="5개 지표로 자동 산출됩니다. 눌러서 추이를 보세요." placeholder="미입력">
         <span class="macro-range">0~100</span>
       </div>
       <div class="macro-interpret" id="kospi-fg-interpret"></div>
@@ -4448,6 +4449,11 @@ function setupMacroInput(id, stateKey, interpret) {
   if (state[stateKey] != null) {
     input.value = state[stateKey];
     if (interp) interp.innerHTML = interpret(state[stateKey]);
+  }
+  if (input.readOnly) {
+    // 자동 수집 값이라 편집을 막는다. 대신 누르면 5년 추이가 열린다.
+    input.addEventListener('click', () => showMacroChart(id));
+    return;
   }
   input.addEventListener('input', () => {
     const v = parseFloat(input.value);
