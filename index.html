@@ -236,6 +236,8 @@ body {
 
 /* ── 종목 상세 펼침 ─────────────────────────────────
    표 행을 클릭하면 아래로 근거가 펼쳐진다. 모달보다 맥락이 남는다. */
+.row-clickable { cursor: pointer; }
+.row-clickable:hover td { background: rgba(217,84,43,0.035); }
 .detail-row > td { padding: 0 !important; background: var(--bg-alt); }
 .dp-wrap { padding: 18px 20px 20px; }
 .dp-grid {
@@ -316,13 +318,14 @@ body {
    기본은 접혀 있다. 처음 보는 사람에게는 필요하고
    매일 쓰는 사람에게는 방해가 되기 때문이다. */
 .chart-btn {
-  position: absolute; top: 12px; right: 40px;
   background: var(--white); border: 1px solid var(--border);
   color: var(--ink-mute); border-radius: 999px;
-  padding: 2px 9px; font-size: 11px; font-weight: 800;
-  cursor: pointer; line-height: 1.6;
+  padding: 2px 9px; font-size: 12px; font-weight: 800;
+  cursor: pointer; line-height: 1.6; white-space: nowrap; flex-shrink: 0;
 }
 .chart-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* 라벨 줄: [지표명] ......... [출처][추이]  — 새로고침만 절대배치로 남는다 */
+.macro-label .label-right { display: flex; align-items: center; gap: 5px; margin-left: auto; }
 
 .explain {
   margin-top: 10px;
@@ -1116,11 +1119,13 @@ body {
   <div class="card-subtitle">앞의 둘은 미국 그룹, 뒤의 둘은 국내 그룹에 적용됩니다 · 값은 자동 수집이라 수정할 수 없고, 누르면 추이가 열립니다</div>
   <div class="macro-grid">
     <div class="macro-item us">
-      <button class="chart-btn" data-chart="vix" title="5년 추이 보기">추이</button>
       <button class="refresh-btn" data-refresh="vix" title="다시 받아오기">↻</button>
-      <div class="macro-label">
+<div class="macro-label">
         <span>VIX · 미국 변동성</span>
-        <span class="source">CBOE</span>
+        <span class="label-right">
+          <span class="source">CBOE</span>
+          <button class="chart-btn" data-chart="vix" title="5년 추이 보기">추이</button>
+        </span>
       </div>
       <div class="macro-input-row">
         <input type="number" step="0.01" class="macro-input" id="vix" readonly title="자동 수집 값입니다. 눌러서 추이를 보세요." placeholder="미입력">
@@ -1129,11 +1134,13 @@ body {
       <div class="macro-interpret" id="vix-interpret"></div>
     </div>
     <div class="macro-item us">
-      <button class="chart-btn" data-chart="cnn-fg" title="5년 추이 보기">추이</button>
       <button class="refresh-btn" data-refresh="cnn-fg" title="다시 받아오기">↻</button>
-      <div class="macro-label">
+<div class="macro-label">
         <span>CNN 공포탐욕지수</span>
-        <span class="source">CNN</span>
+        <span class="label-right">
+          <span class="source">CNN</span>
+          <button class="chart-btn" data-chart="cnn-fg" title="5년 추이 보기">추이</button>
+        </span>
       </div>
       <div class="macro-input-row">
         <input type="number" step="1" min="0" max="100" class="macro-input" id="cnn-fg" readonly title="자동 수집 값입니다. 눌러서 추이를 보세요." placeholder="미입력">
@@ -1142,11 +1149,13 @@ body {
       <div class="macro-interpret" id="cnn-fg-interpret"></div>
     </div>
     <div class="macro-item kr">
-      <button class="chart-btn" data-chart="vkospi" title="5년 추이 보기">추이</button>
       <button class="refresh-btn" data-refresh="vkospi" title="다시 받아오기">↻</button>
-      <div class="macro-label">
+<div class="macro-label">
         <span>VKOSPI · 코스피200 변동성</span>
-        <span class="source">KRX</span>
+        <span class="label-right">
+          <span class="source">KRX</span>
+          <button class="chart-btn" data-chart="vkospi" title="5년 추이 보기">추이</button>
+        </span>
       </div>
       <div class="macro-input-row">
         <input type="number" step="0.01" class="macro-input" id="vkospi" readonly title="자동 수집 값입니다. 눌러서 추이를 보세요." placeholder="미입력">
@@ -1155,11 +1164,13 @@ body {
       <div class="macro-interpret" id="vkospi-interpret"></div>
     </div>
     <div class="macro-item kr">
-      <button class="chart-btn" data-chart="ttokjae-fg" title="5년 추이 보기">추이</button>
       <button class="refresh-btn" data-refresh="ttokjae-fg" title="다시 받아오기">↻</button>
-      <div class="macro-label">
+<div class="macro-label">
         <span>똑재 공포탐욕지수</span>
-        <span class="source">자체 산출</span>
+        <span class="label-right">
+          <span class="source">자체 산출</span>
+          <button class="chart-btn" data-chart="ttokjae-fg" title="5년 추이 보기">추이</button>
+        </span>
       </div>
       <div class="macro-input-row">
         <input type="number" step="1" min="0" max="100" class="macro-input" id="kospi-fg" readonly title="5개 지표로 자동 산출됩니다. 눌러서 추이를 보세요." placeholder="미입력">
@@ -2617,7 +2628,7 @@ function signalCell(t) {
   const hasAxes = AXES.some(([k]) => ind[k] !== '' && ind[k] != null);
   if (!hasAxes) {
     const n = Number(ind.oversold_n || 0);
-    return `<div style="cursor:pointer;" onclick="toggleDetail(${t.id})">
+    return `<div>
       <div style="font-weight:800;">${t.rsi != null ? t.rsi.toFixed(1) : '—'}</div>
       <div style="font-size: 12px;color:var(--ink-mute);">과매도 ${n}개</div>
       <div style="font-size: 11px;color:var(--accent);margin-top:2px;">5축 갱신 대기</div>
@@ -2640,10 +2651,7 @@ function signalCell(t) {
     ? `<div style="margin-top:3px;font-size: 11px;font-weight:800;color:#A03D1F;">⚠ 하락추세 진행중</div>`
     : '';
 
-  return `<div style="cursor:pointer;min-width:112px;" onclick="toggleDetail(${t.id})"
-               title="클릭하면 근거가 펼쳐집니다">
-            ${bars}${knife}
-          </div>`;
+  return `<div style="min-width:112px;">${bars}${knife}</div>`;
 }
 
 // ============================================================
@@ -2901,6 +2909,13 @@ function currentMacroValue(key) {
 // 표에서 행을 펼쳐 근거를 보여준다. 모달보다 맥락이 유지된다.
 const expanded = new Set();
 
+// 행 어디를 눌러도 상세가 펼쳐진다. 다만 버튼·보유량 편집·펼침 영역 안쪽은
+// 각자 할 일이 있으므로 여기서 걸러낸다.
+function onRowClick(e, id) {
+  if (e.target.closest('button, a, input, select, .drag-handle, [onclick*="editHoldings"], .detail-row')) return;
+  toggleDetail(id);
+}
+
 function toggleDetail(id) {
   if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
   renderGroups();
@@ -2940,7 +2955,24 @@ function fmtNum(v, d = 2, suffix = '') {
 // 왜 이 축이 이 점수인지 눈으로 따라갈 수 있게 한다.
 function detailRow(t, colspan) {
   const ind = t.ind;
-  if (!ind) return '';
+  // 지표가 없어도 왜 없는지는 보여준다. 빈 문자열을 돌려주면 클릭해도
+  // 아무 일이 안 일어나 '고장난 건가' 싶어진다.
+  if (!ind) {
+    const p = t.pending;
+    const body = p
+      ? `<b>${t.name}</b> 은(는) <b>${p.first || '최근'}</b> 상장해 일봉이 <b>${p.bars}일</b>뿐입니다.
+         보조지표는 30일 이상이 있어야 계산되므로,
+         약 <b>${Math.max(0, 30 - Number(p.bars || 0))}거래일</b> 뒤부터 점수가 나옵니다.`
+      : `<b>${t.name}</b> 의 보조지표를 찾지 못했습니다.
+         상장폐지·종목코드 변경이거나, 아직 수집되지 않은 종목일 수 있습니다.
+         지표는 평일 아침에 전종목을 다시 계산합니다.`;
+    return `<tr class="detail-row"><td colspan="${colspan}">
+      <div class="dp-wrap">
+        <div class="dp-box" style="background:var(--bg-alt);border:1px solid var(--border);margin-top:0;">
+          ${body}
+        </div>
+      </div></td></tr>`;
+  }
   const parts = ind.parts || {};
   const W = { oversold: 40, drawdown: 35, flow: 25 };
 
@@ -3490,7 +3522,7 @@ function renderGroup(group) {
       `<span class="pct-badge ${t.changeFromHigh < 0 ? 'pct-down' : 'pct-up'}">${t.changeFromHigh >= 0 ? '+' : ''}${t.changeFromHigh.toFixed(1)}%</span>` : '';
     
     return `
-      <tr draggable="true" class="draggable" data-id="${t.id}">
+      <tr draggable="true" class="draggable row-clickable" data-id="${t.id}" onclick="onRowClick(event, ${t.id})">
         <td class="drag-handle" title="드래그해서 그룹 이동">⋮⋮</td>
         <td>
           <div class="name">${t.name}</div>
