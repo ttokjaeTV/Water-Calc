@@ -41,6 +41,16 @@ def main() -> int:
     if src and "근사" in src:
         print(f"  ! 장단기 금리차가 근사치다 — {src}")
 
+    # 신규상장 목록은 전종목 수집이 돌아야 생긴다. 없으면 deploy 모드로만
+    # 며칠 돈 상태라는 뜻이라, 화면에서 '신규상장' 표기가 안 나온다.
+    for mk in ("us", "kr"):
+        p = os.path.join(DATA, f"pending_{mk}.json")
+        if os.path.exists(p):
+            n = len(json.load(open(p, encoding="utf-8")))
+            print(f"  pending_{mk}: {n}종목 (신규상장 등)")
+        else:
+            print(f"  ! pending_{mk}.json 없음 — 전종목 수집이 한 번 돌아야 생긴다")
+
     total = 0
     for base, _, files in os.walk(DATA):
         for f in files:
