@@ -51,6 +51,19 @@ def main() -> int:
         else:
             print(f"  ! pending_{mk}.json 없음 — 전종목 수집이 한 번 돌아야 생긴다")
 
+    # 매크로 카드·참고 지표 타일의 '추이' 차트는 전부 이 파일 하나에 달려 있다.
+    # 조용히 비면 타일을 눌러도 설명만 뜨므로 여기서 개수를 찍어 둔다.
+    hp = os.path.join(DATA, "history.json")
+    if os.path.exists(hp):
+        h = json.load(open(hp, encoding="utf-8"))
+        s = h.get("series") or {}
+        print(f"  시계열 {len(s)}종 ({os.path.getsize(hp)/1024:.0f}KB)")
+        thin_ones = [k for k, v in s.items() if len(v) < 100]
+        if thin_ones:
+            print(f"  ! 포인트가 100개 미만인 시계열: {thin_ones}")
+    else:
+        print("  ! history.json 없음 — 추이 차트가 전부 안 뜬다")
+
     total = 0
     for base, _, files in os.walk(DATA):
         for f in files:

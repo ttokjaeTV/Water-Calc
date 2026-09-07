@@ -301,8 +301,19 @@ body {
 .mx-tile {
   background: var(--bg-alt); border: 1px solid var(--border);
   border-radius: 11px; padding: 9px 11px;
+  position: relative;
 }
-.mx-label { font-size: 12.5px; font-weight: 700; color: var(--ink-mute); }
+/* 5년 추이가 있는 타일만 눌린다. 눌러도 아무 일 없는 타일을
+   같은 모양으로 두면 사용자가 계속 눌러보게 된다. */
+.mx-tile.mx-has-chart { cursor: pointer; transition: border-color .12s, background .12s; }
+.mx-tile.mx-has-chart:hover { border-color: var(--accent); background: var(--white); }
+.mx-tile.mx-has-chart::after {
+  content: '추이'; position: absolute; top: 8px; right: 9px;
+  font-size: 10.5px; font-weight: 800; color: var(--ink-mute);
+  letter-spacing: -.2px; opacity: .55;
+}
+.mx-tile.mx-has-chart:hover::after { color: var(--accent); opacity: 1; }
+.mx-label { font-size: 12.5px; font-weight: 700; color: var(--ink-mute); padding-right: 26px; }
 .mx-value {
   font-size: 19px; font-weight: 800; letter-spacing: -.3px;
   font-variant-numeric: tabular-nums; margin-top: 2px;
@@ -2510,26 +2521,45 @@ const AXES = [
 // 나머지를 여기서 타일로 펼친다. 점수에는 넣지 않는다 — 국면을 읽는 재료다.
 // ============================================================
 
+// 값 표기는 타일과 차트가 같아야 한다. 한 군데서만 정의한다.
+const MX_FMT = {
+  ust10y:     v => v.toFixed(2) + '%',
+  ust13w:     v => v.toFixed(2) + '%',
+  ust30y:     v => v.toFixed(2) + '%',
+  yieldCurve: v => v.toFixed(2) + '%p',
+  dxy:        v => v.toFixed(2),
+  usdkrw:     v => '₩' + Math.round(v).toLocaleString(),
+  sp500:      v => Math.round(v).toLocaleString(),
+  nasdaq:     v => Math.round(v).toLocaleString(),
+  kospi:      v => Math.round(v).toLocaleString(),
+  kosdaq:     v => v.toFixed(1),
+  gold:       v => '$' + Math.round(v).toLocaleString(),
+  wti:        v => '$' + v.toFixed(1),
+  foreignNetBuy: v => (v > 0 ? '+' : '') + v.toFixed(2) + '조',
+  highLowRatio:  v => v.toFixed(0) + '%',
+  creditSpread:  v => v.toFixed(3),
+};
+
 const MX_GROUPS = [
   ['금리', [
-    ['ust10y',     '미 10년물',    v => v.toFixed(2) + '%',  '오르면 주식에 부담'],
-    ['ust13w',     '미 13주',      v => v.toFixed(2) + '%',  '단기 정책금리 대용'],
-    ['ust30y',     '미 30년물',    v => v.toFixed(2) + '%',  '장기 기대'],
-    ['yieldCurve', '장단기 금리차', v => v.toFixed(2) + '%p', '마이너스면 역전'],
+    ['ust10y',     '미 10년물',    '오르면 주식에 부담'],
+    ['ust13w',     '미 13주',      '단기 정책금리 대용'],
+    ['ust30y',     '미 30년물',    '장기 기대'],
+    ['yieldCurve', '장단기 금리차', '마이너스면 역전'],
   ]],
   ['환율·달러', [
-    ['dxy',    '달러인덱스', v => v.toFixed(2),                    '강세면 신흥국 역풍'],
-    ['usdkrw', '원/달러',    v => '₩' + Math.round(v).toLocaleString(), ''],
+    ['dxy',    '달러인덱스', '강세면 신흥국 역풍'],
+    ['usdkrw', '원/달러',    ''],
   ]],
   ['주요 지수', [
-    ['sp500',  'S&P500', v => Math.round(v).toLocaleString(), ''],
-    ['nasdaq', '나스닥',  v => Math.round(v).toLocaleString(), ''],
-    ['kospi',  '코스피',  v => Math.round(v).toLocaleString(), ''],
-    ['kosdaq', '코스닥',  v => v.toFixed(1),                   ''],
+    ['sp500',  'S&P500', ''],
+    ['nasdaq', '나스닥',  ''],
+    ['kospi',  '코스피',  ''],
+    ['kosdaq', '코스닥',  ''],
   ]],
   ['원자재', [
-    ['gold', '금',  v => '$' + Math.round(v).toLocaleString(), '안전자산 선호'],
-    ['wti',  'WTI', v => '$' + v.toFixed(1),                   '인플레 압력'],
+    ['gold', '금',  '안전자산 선호'],
+    ['wti',  'WTI', '인플레 압력'],
   ]],
 ];
 
@@ -2539,13 +2569,19 @@ function renderMacroExtra() {
   const m = DS.macro;
   if (!m) { el.innerHTML = ''; return; }
 
-  const tile = (label, value, sub, note) => `
-    <div class="mx-tile">
+  // key 를 넘기면 5년 추이 차트가 열린다. HIST_META 에 없는 지표는
+  // 누를 수 없는 평범한 타일로 남는다.
+  const tile = (label, value, sub, note, key) => {
+    const on = key && HIST_META[key];
+    return `
+    <div class="mx-tile${on ? ' mx-has-chart' : ''}"
+         ${on ? `onclick="showMacroChart('${key}')" title="5년 추이 보기"` : ''}>
       <div class="mx-label">${label}</div>
       <div class="mx-value">${value}</div>
       ${sub || ''}
       ${note ? `<div class="mx-note">${note}</div>` : ''}
     </div>`;
+  };
 
   const delta = (cur, prev) => {
     if (prev == null || cur == null || !prev) return '';
@@ -2557,7 +2593,7 @@ function renderMacroExtra() {
 
   let html = '';
   for (const [gname, items] of MX_GROUPS) {
-    const tiles = items.map(([key, label, fmt, note]) => {
+    const tiles = items.map(([key, label, note]) => {
       const o = m[key];
       if (!o || o.value == null) return '';
       let extraNote = note;
@@ -2566,7 +2602,8 @@ function renderMacroExtra() {
           String(m.yieldCurveSource).includes('근사')) {
         extraNote = '근사 (10년물−13주)';
       }
-      return tile(label, fmt(Number(o.value)), delta(o.value, o.prev), extraNote);
+      return tile(label, MX_FMT[key](Number(o.value)),
+                  delta(o.value, o.prev), extraNote, key);
     }).filter(Boolean).join('');
     if (tiles) html += `<div class="mx-group"><div class="mx-title">${gname}</div>
                           <div class="mx-grid">${tiles}</div></div>`;
@@ -2576,21 +2613,21 @@ function renderMacroExtra() {
   const extra = [];
   if (m.foreignNetBuy && m.foreignNetBuy.value != null) {
     const v = m.foreignNetBuy.value;
-    extra.push(tile('외국인 순매수',
-      `${v > 0 ? '+' : ''}${v.toFixed(2)}조`,
+    extra.push(tile('외국인 순매수', MX_FMT.foreignNetBuy(v),
       `<div class="mx-sub ${v >= 0 ? 'mx-down' : 'mx-up'}">${v >= 0 ? '순매수' : '순매도'}</div>`,
-      '5영업일 · 코스피+코스닥'));
+      '5영업일 · 코스피+코스닥', 'foreignNetBuy'));
   }
   if (m.highLowRatio && m.highLowRatio.value != null) {
     const h = m.highLowRatio;
-    extra.push(tile('52주 신고가 비율', h.value.toFixed(0) + '%', '',
+    // 신고가 비율만 과거 시계열이 없다. key 를 넘기지 않아 눌리지 않는다.
+    extra.push(tile('52주 신고가 비율', MX_FMT.highLowRatio(h.value), '',
       `신고가 ${h.high} / 신저가 ${h.low}`));
   }
   if (m.creditSpread && m.creditSpread.ratio != null) {
     const c = m.creditSpread;
-    extra.push(tile('신용 스프레드', c.ratio.toFixed(3),
+    extra.push(tile('신용 스프레드', MX_FMT.creditSpread(c.ratio),
       `<div class="mx-sub ${c.vs60d >= 0 ? 'mx-down' : 'mx-up'}">60일 평균 대비 ${c.vs60d > 0 ? '+' : ''}${c.vs60d}%</div>`,
-      'HYG/LQD 상대강도'));
+      'HYG/LQD 상대강도', 'creditSpread'));
   }
   if (extra.length) {
     html += `<div class="mx-group"><div class="mx-title">국내 수급 · 시장 폭 · 신용</div>
@@ -2779,6 +2816,30 @@ const HIST_META = {
   'vkospi':   { label: 'VKOSPI · 코스피200 변동성', color: '#B8813F', lo: 0, hi: 60, bands: [] },
 };
 
+// 참고 지표는 값의 범위가 제각각이다(금리 4%대, 나스닥 2만대). 고정 축을 쓰면
+// 선이 위아래 끝에 붙어버리므로 auto 로 두고 데이터 범위에 맞춘다.
+// key 는 macro.json / history.json 과 같아야 한다.
+[
+  ['ust10y',     '미 10년물 국채금리',  '#8B6F47'],
+  ['ust13w',     '미 13주 국채금리',    '#8B6F47'],
+  ['ust30y',     '미 30년물 국채금리',  '#8B6F47'],
+  ['yieldCurve', '장단기 금리차',       '#A03D1F', true],
+  ['dxy',        '달러인덱스',          '#B8813F'],
+  ['usdkrw',     '원/달러 환율',        '#B8813F'],
+  ['sp500',      'S&P500',              '#D9542B'],
+  ['nasdaq',     '나스닥 종합',         '#D9542B'],
+  ['kospi',      '코스피',              '#D9542B'],
+  ['kosdaq',     '코스닥',              '#D9542B'],
+  ['gold',       '금 선물',             '#C4A57B'],
+  ['wti',        'WTI 원유 선물',       '#C4A57B'],
+  ['foreignNetBuy', '외국인 순매수 (5영업일 합계)', '#3F6B4A', true],
+  ['creditSpread',  '신용 스프레드 (HYG/LQD)',      '#3F6B4A'],
+  ['highLowRatio',  '52주 신고가 비율',             '#3F6B4A'],
+].forEach(([k, label, color, zeroLine]) => {
+  HIST_META[k] = { label, color, auto: true, zeroLine: !!zeroLine,
+                   fmt: MX_FMT[k], bands: [] };
+});
+
 function sparkPath(pts, w, h, lo, hi, pad = 6) {
   if (!pts.length) return '';
   const n = pts.length;
@@ -2793,6 +2854,7 @@ function showMacroChart(key) {
   const all = (hist.series || {})[key] || [];
   const note = (hist.notes || {})[key] || '';
   const cur = currentMacroValue(key);
+  const fmtv = meta.fmt || (x => String(x));
 
   if (!all.length) {
     openModal(meta.label, `
@@ -2804,19 +2866,22 @@ function showMacroChart(key) {
         ${note || '소스가 현재값만 제공합니다.'}
       </div>
       ${cur != null ? `<div style="margin-top:14px;font-size: 15px;">
-        현재값 <b style="font-size: 22px;color:${meta.color};">${cur}</b></div>` : ''}`);
+        현재값 <b style="font-size: 22px;color:${meta.color};">${fmtv(cur)}</b></div>` : ''}`);
     return;
   }
 
-  const ranges = [['1Y', 250], ['3Y', 750], ['5Y', 99999]];
+  // 기간은 '포인트 개수' 가 아니라 '날짜' 로 잘라야 한다. 시계열마다 솎아낸
+  // 간격이 달라서(주 지표 700, 참고 지표 500포인트) 개수로 자르면 지표마다
+  // 1Y 가 가리키는 실제 기간이 달라진다.
+  const ranges = [['1Y', 1], ['3Y', 3], ['5Y', 99]];
   const html = `
     <div id="mc-wrap" data-key="${key}">
       <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-        ${cur != null ? `<span style="font-size: 30px;font-weight:800;color:${meta.color};">${cur}</span>` : ''}
+        ${cur != null ? `<span style="font-size: 30px;font-weight:800;color:${meta.color};">${fmtv(cur)}</span>` : ''}
         <span style="font-size: 13px;color:var(--ink-mute);" id="mc-pos"></span>
         <span style="margin-left:auto;display:flex;gap:6px;">
           ${ranges.map(([lb, n], i) =>
-            `<button class="btn-ghost btn mc-range" data-n="${n}"
+            `<button class="btn-ghost btn mc-range" data-y="${n}"
               style="padding:4px 12px;font-size: 12px;${i === ranges.length - 1 ? 'border-color:var(--accent);color:var(--accent);' : ''}">${lb}</button>`).join('')}
         </span>
       </div>
@@ -2824,7 +2889,7 @@ function showMacroChart(key) {
       <div style="margin-top:12px;font-size: 12px;color:var(--ink-mute);line-height:1.75;">${note}</div>
     </div>`;
   openModal(meta.label, html);
-  drawMacroChart(key, 99999);
+  drawMacroChart(key, 99);
 
   document.querySelectorAll('.mc-range').forEach(b => {
     b.addEventListener('click', () => {
@@ -2832,23 +2897,41 @@ function showMacroChart(key) {
         x.style.borderColor = ''; x.style.color = '';
       });
       b.style.borderColor = 'var(--accent)'; b.style.color = 'var(--accent)';
-      drawMacroChart(key, Number(b.dataset.n));
+      drawMacroChart(key, Number(b.dataset.y));
     });
   });
 }
 
-function drawMacroChart(key, take) {
+function drawMacroChart(key, years) {
   const meta = HIST_META[key];
   const all = ((DS.history || {}).series || {})[key] || [];
-  const pts = all.slice(Math.max(0, all.length - take));
   const el = document.getElementById('mc-chart');
-  if (!el || !pts.length) return;
+  if (!el || !all.length) return;
+
+  // 마지막 데이터 날짜 기준으로 자른다. 오늘 기준으로 자르면 갱신이
+  // 하루 밀렸을 때 1Y 가 364일이 되는 식으로 어긋난다.
+  const last = new Date(all[all.length - 1][0]);
+  const from = new Date(last);
+  from.setFullYear(from.getFullYear() - years);
+  const cut = from.toISOString().slice(0, 10);
+  let pts = all.filter(p => p[0] >= cut);
+  if (pts.length < 2) pts = all;
 
   const W = 760, H = 260;
   const vals = pts.map(p => p[1]);
-  let lo = Math.min(meta.lo, Math.min(...vals));
-  let hi = Math.max(...vals);
-  hi = Math.min(meta.hi, hi * 1.08);
+  const fmtv = meta.fmt || (x => x.toFixed(1));
+  let lo, hi;
+  if (meta.auto) {
+    // 데이터 범위에 맞춘다. 금리 3.9~4.8% 같은 좁은 구간도 형태가 보여야 한다.
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    const pad = (mx - mn) * 0.10 || Math.abs(mx) * 0.05 || 1;
+    lo = mn - pad; hi = mx + pad;
+    // 부호가 의미를 갖는 지표(금리 역전, 순매도)는 0 이 축 안에 있어야 한다.
+    if (meta.zeroLine) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+  } else {
+    lo = Math.min(meta.lo, Math.min(...vals));
+    hi = Math.min(meta.hi, Math.max(...vals) * 1.08);
+  }
   if (hi <= lo) hi = lo + 1;
 
   const sy = (v) => H - 6 - (H - 12) * ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo));
@@ -2873,8 +2956,19 @@ function drawMacroChart(key, take) {
              stroke="${meta.color}" stroke-width="1.5" stroke-dasharray="4 3" opacity=".75"/>`
     : '';
 
+  // 0선 — 금리 역전이나 순매도 전환이 눈에 바로 들어와야 한다.
+  const zeroLine = (meta.zeroLine && lo < 0 && hi > 0)
+    ? `<line x1="0" y1="${sy(0)}" x2="${W}" y2="${sy(0)}"
+             stroke="var(--ink-mute)" stroke-width="1" opacity=".55"/>
+       <text x="6" y="${sy(0) - 5}" font-size="10.5" font-weight="700"
+             fill="var(--ink-mute)" opacity=".8">0</text>`
+    : '';
+
   const path = sparkPath(pts, W, H, lo, hi);
-  const area = `${path}L${W - 6},${H - 6}L6,${H - 6}Z`;
+  // 부호가 의미를 갖는 지표는 0 을 바닥으로 채운다. 차트 바닥까지 칠하면
+  // 금리가 역전된 구간(마이너스)도 플러스처럼 보인다.
+  const base = (meta.zeroLine && lo < 0 && hi > 0) ? sy(0) : H - 6;
+  const area = `${path}L${W - 6},${base}L6,${base}Z`;
 
   // 지금 값이 이 기간에서 몇 퍼센타일인지 — '역사적으로 어디쯤' 의 답
   if (cur != null) {
@@ -2882,7 +2976,7 @@ function drawMacroChart(key, take) {
     const pct = Math.round(below / vals.length * 100);
     const posEl = document.getElementById('mc-pos');
     if (posEl) posEl.textContent =
-      `이 기간 ${pts.length}일 중 하위 ${pct}% 지점 · 최저 ${Math.min(...vals).toFixed(1)} / 최고 ${Math.max(...vals).toFixed(1)}`;
+      `이 기간 ${pts.length}포인트 중 하위 ${pct}% 지점 · 최저 ${fmtv(Math.min(...vals))} / 최고 ${fmtv(Math.max(...vals))}`;
   }
 
   el.innerHTML = `
@@ -2892,6 +2986,7 @@ function drawMacroChart(key, take) {
       <path d="${area}" fill="${meta.color}" opacity=".10"/>
       <path d="${path}" fill="none" stroke="${meta.color}" stroke-width="1.8"
             stroke-linejoin="round" stroke-linecap="round"/>
+      ${zeroLine}
       ${curLine}
     </svg>
     <div style="display:flex;justify-content:space-between;font-size: 11px;
@@ -2901,9 +2996,17 @@ function drawMacroChart(key, take) {
 }
 
 function currentMacroValue(key) {
+  // 점수에 쓰이는 4개는 입력값(state)이 최신이다. 사용자가 손댈 수 있어서다.
   const m = { 'vix': state.vix, 'cnn-fg': state['cnn-fg'],
               'vkospi': state.vkospi, 'kospi-fg': state['kospi-fg'] }[key];
-  return (m == null || isNaN(m)) ? null : Number(m);
+  if (m != null && !isNaN(m)) return Number(m);
+  // 참고 지표는 macro.json 이 유일한 출처다.
+  const o = (DS.macro || {})[key];
+  if (o) {
+    const v = (key === 'creditSpread') ? o.ratio : o.value;
+    if (v != null && !isNaN(v)) return Number(v);
+  }
+  return null;
 }
 
 // 표에서 행을 펼쳐 근거를 보여준다. 모달보다 맥락이 유지된다.

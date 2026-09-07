@@ -11,6 +11,10 @@
              (야후·네이버·pykrx 에 없고, 인베스팅닷컴은 403)
   똑재 F&G   3개 재료로 역산                              ⚠ 재료 3/5
 
+  참고 지표(금리·환율·지수·원자재)는 전부 야후 심볼이라 5년치가 그대로 나온다.
+  장단기 금리차는 10년물−13주로, 신용 스프레드는 HYG/LQD 로 날짜를 맞춰 계산한다.
+  52주 신고가 비율만 과거 전종목 상태가 필요해 시계열을 만들 수 없다.
+
 똑재 F&G 역산이 5개가 아니라 3개인 이유
   - VKOSPI: 위와 같은 이유로 과거값이 없다
   - 52주 신고가 비율: 과거 시점의 전종목 상태가 필요하다. 3,900종목 ×
@@ -125,11 +129,24 @@ def kospi_daily(years=5):
     return out
 
 
+_FOREIGN_CACHE = {}
+
+
 def foreign_history(years=5):
     """
     외국인 순매수 5영업일 합계(조원)의 시계열. KRX 로그인이 필요하다.
     자격증명이 없으면 빈 dict 를 돌려주고, 그때는 재료 2개로 역산한다.
+
+    똑재 F&G 역산과 참고 지표 타일이 같은 데이터를 쓰므로 한 번만 받는다.
+    KRX 는 로그인 세션당 요청 수에 민감해서 같은 걸 두 번 부를 이유가 없다.
     """
+    if years in _FOREIGN_CACHE:
+        return _FOREIGN_CACHE[years]
+    _FOREIGN_CACHE[years] = _foreign_history_uncached(years)
+    return _FOREIGN_CACHE[years]
+
+
+def _foreign_history_uncached(years=5):
     import krx_auth
     if not krx_auth.login(verbose=False):
         print("  외국인 순매수: KRX 로그인 불가 — 이 재료는 빼고 역산한다")
@@ -203,6 +220,73 @@ def ttokjae_fg_history():
     return thin(out), used
 
 
+# ------------------------------------------------------------
+# 참고 지표 5년 시계열
+#
+# 화면의 MX_GROUPS 타일과 키가 같아야 한다. 키가 어긋나면 타일을 눌러도
+# 차트가 안 뜨고 조용히 아무 일도 안 일어나므로, 여기 키를 고치면
+# index.html 의 HIST_META 도 같이 고칠 것.
+# ------------------------------------------------------------
+
+REF_SYMBOLS = [
+    ("ust10y",  "^TNX",     "미 10년물 국채금리"),
+    ("ust13w",  "^IRX",     "미 13주 국채금리"),
+    ("ust30y",  "^TYX",     "미 30년물 국채금리"),
+    ("dxy",     "DX-Y.NYB", "달러인덱스"),
+    ("usdkrw",  "KRW=X",    "원/달러 환율"),
+    ("sp500",   "^GSPC",    "S&P500"),
+    ("nasdaq",  "^IXIC",    "나스닥 종합"),
+    ("kospi",   "^KS11",    "코스피"),
+    ("kosdaq",  "^KQ11",    "코스닥"),
+    ("gold",    "GC=F",     "금 선물"),
+    ("wti",     "CL=F",     "WTI 원유 선물"),
+]
+
+# 5년 일봉이 1,250개인데 15종을 전부 그대로 담으면 파일이 커진다.
+# 참고 지표는 추세만 보면 되므로 주 지표(700)보다 성기게 남긴다.
+REF_KEEP = 500
+
+
+def ref_histories():
+    """야후에서 바로 받는 참고 지표. 개별 실패는 건너뛰고 계속한다."""
+    out, notes, raw = {}, {}, {}
+    for key, sym, label in REF_SYMBOLS:
+        try:
+            s = yahoo_daily(sym, "5y")
+            if len(s) < 100:
+                raise ValueError(f"포인트 부족 {len(s)}")
+            raw[key] = s
+            out[key] = thin(s, REF_KEEP)
+            notes[key] = f"야후 {sym} · {s[0][0]} ~ {s[-1][0]}"
+            print(f"  {label} {len(s)}일 → {len(out[key])}포인트")
+        except Exception as e:
+            print(f"  ! {label}({sym}) 실패 {type(e).__name__}: {str(e)[:60]}")
+    return out, notes, raw
+
+
+def derive_yield_curve(raw):
+    """장단기 금리차 = 10년물 − 13주. 두 시계열의 공통 날짜만 쓴다."""
+    ten, short = raw.get("ust10y"), raw.get("ust13w")
+    if not ten or not short:
+        return None
+    sm = dict(short)
+    s = [(d, round(v - sm[d], 3)) for d, v in ten if d in sm]
+    return thin(s, REF_KEEP) if len(s) >= 100 else None
+
+
+def credit_spread_history():
+    """
+    신용 스프레드 대용 = HYG/LQD 상대강도.
+    떨어지면 하이일드가 투자등급보다 부진하다는 뜻 — 위험회피 국면이다.
+    """
+    hyg, lqd = yahoo_daily("HYG", "5y"), yahoo_daily("LQD", "5y")
+    lm = dict(lqd)
+    s = [(d, round(v / lm[d], 4)) for d, v in hyg if d in lm and lm[d]]
+    if len(s) < 100:
+        raise ValueError(f"포인트 부족 {len(s)}")
+    return thin(s, REF_KEEP)
+
+
 def main():
     C.ensure_data_dirs()
     hist = {"updated": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
@@ -242,8 +326,48 @@ def main():
         "야후·네이버·pykrx 에 없고 인베스팅닷컴은 403으로 막힌다. "
         "CNBC 는 현재값만 준다.")
 
+    # ---- 참고 지표(금리·환율·지수·원자재) ----
+    print("  참고 지표 5년 시계열")
+    ref, refnotes, raw = ref_histories()
+    hist["series"].update(ref)
+    hist["notes"].update(refnotes)
+
+    s = derive_yield_curve(raw)
+    if s:
+        hist["series"]["yieldCurve"] = s
+        hist["notes"]["yieldCurve"] = (
+            f"야후 ^TNX − ^IRX 로 직접 계산 · {s[0][0]} ~ {s[-1][0]}. "
+            "FRED 의 10년−2년 공식 시리즈와는 단기물 만기가 달라 값이 조금 다르다.")
+        print(f"  장단기 금리차 {len(s)}포인트 (10년물−13주)")
+
+    try:
+        s = credit_spread_history()
+        hist["series"]["creditSpread"] = s
+        hist["notes"]["creditSpread"] = (
+            f"HYG/LQD 종가 비율 · {s[0][0]} ~ {s[-1][0]}. "
+            "떨어지면 하이일드가 투자등급보다 부진하다는 뜻으로 위험회피 신호다.")
+        print(f"  신용 스프레드 {len(s)}포인트")
+    except Exception as e:
+        print(f"  ! 신용 스프레드 실패 {type(e).__name__}: {str(e)[:60]}")
+
+    fh = foreign_history(5)
+    if fh:
+        s = thin(sorted(fh.items()), REF_KEEP)
+        hist["series"]["foreignNetBuy"] = s
+        hist["notes"]["foreignNetBuy"] = (
+            f"KRX 코스피+코스닥 외국인 순매수 5영업일 합계(조원) · {s[0][0]} ~ {s[-1][0]}")
+        print(f"  외국인 순매수 {len(s)}포인트")
+    else:
+        hist["notes"]["foreignNetBuy"] = "KRX 로그인이 없어 과거 시계열을 받지 못했다."
+
+    # 52주 신고가 비율만 시계열이 불가능하다. 이유를 화면에 그대로 띄운다.
+    hist["notes"]["highLowRatio"] = (
+        "과거 시점의 전종목 상태가 필요하다. 3,900종목 × 5년 일봉을 "
+        "날짜마다 다시 계산해야 해서 현실적이지 않다. 현재값만 제공한다.")
+
     C.write_json(os.path.join(C.DATA, "history.json"), hist)
-    print(f"  시리즈 {len(hist['series'])}종")
+    size = os.path.getsize(os.path.join(C.DATA, "history.json")) / 1024
+    print(f"  시리즈 {len(hist['series'])}종 · {size:.0f}KB")
 
 
 if __name__ == "__main__":
