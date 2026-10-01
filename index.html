@@ -1466,7 +1466,8 @@ body {
   </div>
   
   <div id="weight-panel" style="display:none;margin-top:16px;">
-    <div class="card-subtitle" style="margin-top:0;">사용자 취향에 맞게 각 지표의 중요도를 조절하세요. 합계가 자동 정규화됩니다.</div>
+    <div class="card-subtitle" style="margin-top:0;">사용자 취향에 맞게 각 지표의 중요도를 조절하세요. 합계가 자동 정규화됩니다.
+      <a href="javascript:void(0)" onclick="showScoreMethod()" style="color:var(--accent);font-weight:700;white-space:nowrap;">지표별 반영 비중 보기 →</a></div>
     
     <div class="weight-grid">
       <div class="weight-item">
@@ -1624,6 +1625,7 @@ body {
 <div class="card">
   <div class="card-title">9단계 매수/익절 가이드</div>
   <div class="card-subtitle">종합점수 = (VIX × <span id="guide-w-vix">20</span>% + F&amp;G × <span id="guide-w-fg">30</span>% + 종목 보조지표 × <span id="guide-w-rsi">50</span>%) / 100 <span style="color:var(--text-mute);">— 앞 둘이 <b>시장</b>, 마지막이 <b>종목</b> 층입니다</span></div>
+  <button class="btn-ghost btn" onclick="showScoreMethod()" style="padding:7px 14px;font-size: 14px;margin:2px 0 14px;">점수는 이렇게 계산됩니다 — 지표별 반영 비중 보기</button>
   <div class="guide-grid" id="guide-grid"></div>
   
   <!-- 역사적 참고 사례 -->
@@ -1790,7 +1792,7 @@ body {
         <div class="macro-input-row"><input type="number" step="0.01" class="macro-input" id="fg-rsi" placeholder="42"><span class="macro-range">0~100</span></div>
       </div>
       <div class="macro-item">
-        <div class="macro-label"><span>④ 외국인 20일 누적 순매수 (조원)</span><span class="source">KRX</span></div>
+        <div class="macro-label"><span>④ 외국인 5영업일 순매수 합계 (조원)</span><span class="source">KRX · 코스피+코스닥</span></div>
         <div class="macro-input-row"><input type="number" step="0.1" class="macro-input" id="fg-foreign" placeholder="-2.3"><span class="macro-range">조원</span></div>
       </div>
       <div class="macro-item">
@@ -2206,14 +2208,14 @@ async function apiCall(path) {
     await DS.init();
     const m = DS.macro || {};
     const kf = m.kospiFG || {};
-    // 외국인 순매수·52주 신고가 비율은 KRX 가 막혀 있어 자동 수집이 안 된다.
-    // 지어내지 않고 null 로 두고, 화면에서 수기 입력을 받는다.
+    // 외국인 순매수(KRX 로그인)·52주 신고가 비율(국내 전종목 지표)도 이제 macro.json 에 실린다.
+    // 수집에 실패한 날은 null 로 오고, 그때만 화면에서 수기 입력을 받는다 — 지어내지 않는다.
     return {
       momentum: kf.momentum ?? null,
       rsi: kf.rsi ?? null,
       vkospi: m.vkospi ? m.vkospi.value : null,
-      foreign: null,
-      highlow: null,
+      foreign: m.foreignNetBuy ? (m.foreignNetBuy.value ?? null) : null,
+      highlow: m.highLowRatio ? (m.highLowRatio.value ?? null) : null,
     };
   }
   throw new Error('지원하지 않는 요청: ' + path);
@@ -2609,6 +2611,39 @@ function renderMacroExtra() {
                           <div class="mx-grid">${tiles}</div></div>`;
   }
 
+  // 밸류에이션(버블 지표) — bubble.json. 예전엔 받기만 하고 어디에도 안 그렸다.
+  // 월·분기 단위로 느리게 움직이는 값이라 점수에는 넣지 않고 국면 참고로만 둔다.
+  const b = DS.bubble;
+  if (b) {
+    const vt = [];
+    const dt = o => o && o.date ? `${o.date} 기준` : '';
+    if (b.shillerCAPE && b.shillerCAPE.value != null) {
+      vt.push(tile('실러 CAPE', Number(b.shillerCAPE.value).toFixed(1) + '배', '',
+        `S&P500 10년 경기조정 PER · ${dt(b.shillerCAPE)}`));
+    }
+    if (b.ma200Gap && b.ma200Gap.value != null) {
+      const g = Number(b.ma200Gap.value);
+      vt.push(tile(`${b.ma200Gap.symbol || 'SPY'} 200일선 괴리`, (g > 0 ? '+' : '') + g.toFixed(1) + '%',
+        `<div class="mx-sub ${g >= 0 ? 'mx-up' : 'mx-down'}">${g >= 0 ? '200일선 위' : '200일선 아래'}</div>`,
+        '크게 벌어질수록 과열'));
+    }
+    if (b.buffett && b.buffett.value != null) {
+      vt.push(tile('버핏지수', Number(b.buffett.value).toFixed(0) + '%', '',
+        `미국 시가총액÷GDP (윌셔5000 근사)${b.buffett.gdpDate ? ` · GDP ${b.buffett.gdpDate}` : ''}`));
+    }
+    if (b.sp500EPS && b.sp500EPS.value != null) {
+      vt.push(tile('S&P500 EPS', '$' + Number(b.sp500EPS.value).toFixed(1), '',
+        `12개월 주당순이익 · ${dt(b.sp500EPS)}`));
+    }
+    if (b.fedFunds && b.fedFunds.value != null) {
+      vt.push(tile('연준 실효금리', Number(b.fedFunds.value).toFixed(2) + '%', '', dt(b.fedFunds)));
+    }
+    if (vt.length) {
+      html += `<div class="mx-group"><div class="mx-title">밸류에이션 (미국)</div>
+                 <div class="mx-grid">${vt.join('')}</div></div>`;
+    }
+  }
+
   // 국내 수급·시장 폭·신용 — 형태가 달라 따로 만든다.
   const extra = [];
   if (m.foreignNetBuy && m.foreignNetBuy.value != null) {
@@ -2634,7 +2669,8 @@ function renderMacroExtra() {
                <div class="mx-grid">${extra.join('')}</div></div>`;
   }
 
-  const errs = (m.errors || []).map(e => e.source);
+  const errs = [...new Set([...(m.errors || []), ...((DS.bubble && DS.bubble.errors) || [])]
+    .map(e => e.source))];
   html += `<div class="mx-foot">
       점수에는 들어가지 않는 참고 지표입니다. 갱신 ${(m.updated || '').replace('T', ' ').replace('Z', ' UTC')}
       ${errs.length ? `<br>수집 실패: ${errs.join(', ')} — 해당 값은 표시되지 않습니다.` : ''}
@@ -3266,7 +3302,39 @@ function showIndicators(id) {
       </div>
     </div>` : '';
 
+  // 이 종목의 종합점수가 시장·종목 층에서 각각 몇 점씩 왔는지
+  const cd = compositeScoreDetail(t.group, t);
+  const cdKr = t.group === 'kr';
+  const tierNow = cd ? getTier(cd.total) : null;
+  const wSum = cd ? (cd.vix.weight + cd.fg.weight + cd.rsi.weight) : 1;
+  const wp = x => Math.round(x * 1000 / wSum) / 10;   // 슬라이더 합이 100이 아니어도 실제 비중으로 보여준다
+  const contribRow = (label, raw, part) => `
+    <tr>
+      <td style="padding:5px 0;color:var(--ink-soft);">${label}</td>
+      <td style="padding:5px 0;text-align:right;white-space:nowrap;">${raw}</td>
+      <td style="padding:5px 0 5px 10px;text-align:right;white-space:nowrap;font-weight:800;">${part.toFixed(1)}</td>
+    </tr>`;
+  const compositeBox = cd ? `
+    <div style="margin-bottom:16px;padding:14px 16px;border-radius:12px;border:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+        <span style="font-size: 14px;color:var(--ink-soft);">종합점수 구성</span>
+        <span style="font-size: 22px;font-weight:800;color:${tierNow ? tierNow.color : 'inherit'};">${cd.total}
+          <span style="font-size: 14px;">${tierNow ? tierNow.label : ''}</span></span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size: 13.5px;">
+        <tr style="color:var(--ink-mute);font-size: 12px;">
+          <td>재료</td><td style="text-align:right;">값 → 점수 × 비중</td><td style="text-align:right;">기여</td></tr>
+        ${contribRow(cdKr ? 'VKOSPI' : 'VIX', `${fmt(cd.vix.raw)} → ${cd.vix.score} × ${wp(cd.vix.weight)}%`, cd.vix.contribution)}
+        ${contribRow(cdKr ? '똑재 공포탐욕' : 'CNN 공포탐욕', `${fmt(cd.fg.raw, 0)} → ${cd.fg.score} × ${wp(cd.fg.weight)}%`, cd.fg.contribution)}
+        ${contribRow('종목점수 (아래 5개 축)', `${cd.rsi.score} × ${wp(cd.rsi.weight)}%`, cd.rsi.contribution)}
+      </table>
+      <div style="font-size: 12.5px;color:var(--ink-mute);margin-top:6px;">
+        <a href="javascript:void(0)" onclick="showScoreMethod()" style="color:var(--accent);font-weight:700;">계산 방식 전체 보기 →</a>
+      </div>
+    </div>` : '';
+
   const html = `
+    ${compositeBox}
     <div style="margin-bottom:16px;padding:14px 16px;border-radius:12px;background:var(--bg-alt);">
       <div style="font-size: 14px;color:var(--ink-soft);margin-bottom:6px;">종목점수</div>
       <div style="font-size: 35px;font-weight:800;line-height:1;">${ind.stock_score ?? '—'}
@@ -3293,8 +3361,8 @@ function showIndicators(id) {
     <table style="width:100%;border-collapse:collapse;font-size: 15px;">
       ${rows.map(([k, v, note]) => `
         <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:9px 4px;color:var(--text-dim);white-space:nowrap;">${k}</td>
-          <td style="padding:9px 4px;text-align:right;font-weight:700;white-space:nowrap;">${v}</td>
+          <td style="padding:9px 4px;color:var(--text-dim);word-break:keep-all;">${k}</td>
+          <td style="padding:9px 4px;text-align:right;font-weight:700;word-break:keep-all;">${v}</td>
         </tr>
         ${note ? `<tr><td colspan="2" style="padding:0 4px 8px;font-size: 13px;color:var(--text-mute);">${note}</td></tr>` : ''}
       `).join('')}
@@ -3352,7 +3420,7 @@ function updateWeightDisplay() {
   
   // 헤더 요약 업데이트
   document.getElementById('weight-current').textContent = 
-    `(VIX ${w.vix}% · F&G ${w.fg}% · RSI ${w.rsi}%)`;
+    `(VIX ${w.vix}% · F&G ${w.fg}% · 종목지표 ${w.rsi}%)`;
   
   // 가이드 섹션 가중치 표시 업데이트
   const gwVix = document.getElementById('guide-w-vix');
@@ -4437,6 +4505,7 @@ async function refreshAll() {
           price: data.price, rsi: data.rsi,
           high52w: data.high52w, low52w: data.low52w,
           changeFromLow: data.changeFromLow, changeFromHigh: data.changeFromHigh,
+          ind: data.ind, pending: data.pending, priceAsOf: data.priceAsOf, changePct: data.changePct,
           loading: false, error: null,
         });
       } catch(e) {
@@ -4573,6 +4642,206 @@ function renderGuide() {
     </div>`;
   }).join('');
 }
+
+// ============================================================
+// 점수 산출 방식 설명
+// ------------------------------------------------------------
+// "보조지표를 잔뜩 가져오는데 실제로 얼마나 쓰이나" 를 화면에서 바로 답한다.
+// 숫자는 전부 지금 가중치·지금 수집값으로 그린다. 로직(getWeights, vixScore,
+// fgScore, score*FG, AXES)과 scripts/indicators.py 의 AXIS_WEIGHT·RISK_WEIGHT·
+// REVERSAL_WEIGHT 를 고치면 아래 SM_AXIS 도 같이 고칠 것.
+// ============================================================
+const SM_AXIS = {
+  oversold: { w: 0.40, n: 4 },   // RSI·스토캐스틱·CCI·Williams %R
+  drawdown: { w: 0.35, n: 5 },   // 52주 고점 대비·이격도 20/60/120/200
+  flow:     { w: 0.25, n: 3 },   // MFI·거래량비율·OBV
+  risk: 0.28, reversal: 0.16,
+};
+
+function showScoreMethod() {
+  const w = getWeights();
+  const W = (w.vix + w.fg + w.rsi) || 1;
+  const share = x => x * 100 / W;                       // 슬라이더 값 → 종합점수 몫(%)
+  const pc = v => v == null ? '—' : (v >= 10 ? v.toFixed(0) : v.toFixed(1)) + '%';
+  const num = (v, d = 1) => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(d);
+  const sc = v => v == null ? '—' : `<b>${Math.round(v)}</b>점`;
+
+  const sec = (title, body) => `
+    <div style="margin-bottom:24px;">
+      <div style="font-size:16px;font-weight:800;color:var(--ink);margin-bottom:8px;">${title}</div>${body}
+    </div>`;
+  const p = t => `<p style="font-size:14px;line-height:1.75;color:var(--ink-soft);margin:0 0 8px;">${t}</p>`;
+  const small = t => `<div style="font-size:12.5px;line-height:1.65;color:var(--ink-mute);margin-top:6px;">${t}</div>`;
+  // align: 열마다 'l' 또는 'r'
+  const table = (head, rows, align) => `
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
+      <thead><tr>${head.map((h, i) => `<th style="text-align:${align[i] === 'r' ? 'right' : 'left'};padding:7px 6px;
+        border-bottom:2px solid var(--border);color:var(--ink-mute);font-weight:700;white-space:nowrap;">${h}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td style="padding:8px 6px;border-bottom:1px solid var(--border);
+        text-align:${align[i] === 'r' ? 'right' : 'left'};${align[i] === 'r' ? 'white-space:nowrap;' : ''}line-height:1.5;">${c}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table></div>`;
+
+  // ── 1. 한눈에 ──────────────────────────────────────────
+  const box = (top, mid, bot, bg) => `
+    <div style="flex:1;min-width:120px;padding:12px;border-radius:12px;background:${bg};text-align:center;">
+      <div style="font-size:12px;color:var(--ink-mute);font-weight:700;">${top}</div>
+      <div style="font-size:16px;font-weight:800;margin:3px 0;">${mid}</div>
+      <div style="font-size:12px;color:var(--ink-soft);line-height:1.5;">${bot}</div>
+    </div>`;
+  const flow = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      ${box('① 시장 층', pc(share(w.vix + w.fg)), `변동성 ${pc(share(w.vix))}<br>공포탐욕 ${pc(share(w.fg))}`, 'var(--bg-alt)')}
+      ${box('② 종목 층', pc(share(w.rsi)), '보조지표 18개<br>→ 5개 축 → 종목점수', 'var(--bg-alt)')}
+    </div>
+    <div style="text-align:center;color:var(--ink-mute);font-weight:800;margin:-2px 0 6px;">↓ 합산</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      ${box('종합점수', '0~100', '겁먹고 눌릴수록<br>점수가 높다', 'var(--accent-soft)')}
+      ${box('→ 9단계', '배수·익절', '월정액 0.5~2배<br>또는 보유량 10~30%', 'var(--accent-soft)')}
+    </div>`;
+
+  // ── 2. 지금 시장점수 ───────────────────────────────────
+  const mRow = (grp, volName, vol, fgName, fg) => [
+    grp,
+    `${volName} ${num(vol, 2)}<br><span style="color:var(--ink-mute);">→ ${sc(vixScore(vol))}</span>`,
+    `${fgName} ${num(fg, 0)}<br><span style="color:var(--ink-mute);">→ ${sc(fgScore(fg))}</span>`,
+    sc(marketScoreOf(grp === '국내' ? 'kr' : 'us')),
+  ];
+  const marketTbl = table(['적용 그룹', '변동성', '공포탐욕', '시장점수'], [
+    mRow('미국·해외', 'VIX', state.vix, 'CNN', state['cnn-fg']),
+    mRow('국내', 'VKOSPI', state.vkospi, '똑재', state['kospi-fg']),
+  ], ['l', 'r', 'r', 'r']);
+
+  // ── 3. 공포탐욕지수 — CNN(미국) 7개 vs 똑재(국내) 5개 나란히 ──────
+  // 같은 개념끼리 한 줄에 놓는다. 점수는 둘 다 CNN 방향(0 공포 ~ 100 탐욕)으로 맞춘다.
+  // 똑재 쪽 score* 함수는 '공포점수'(클수록 공포)라 100에서 뺀다.
+  const cc = ((DS.macro || {}).cnnFearGreed || {}).components || {};
+  const greed = fear => fear == null ? null : 100 - fear;
+  const cell = (label, raw, score) => {
+    if (!label) return '<span style="color:var(--ink-mute);">—</span>';
+    return `<div style="line-height:1.45;">${label}</div>
+      <div style="font-size:12.5px;color:var(--ink-mute);">${raw || ''}${score != null ? `${raw ? ' → ' : ''}<b style="color:var(--ink);">${Math.round(score)}</b>점` : ''}</div>`;
+  };
+  const cn = k => cc[k] ? cc[k].score : null;
+  const vixC = cc.market_volatility_vix;
+  const fgPairs = [
+    ['모멘텀',
+      cell('S&P500 125일선 대비', '', cn('market_momentum_sp500')),
+      cell('코스피 125일선 대비', state['fg-momentum'] != null ? num(state['fg-momentum']) + '%' : '미수집', greed(scoreMomentum(state['fg-momentum'])))],
+    ['신고가',
+      cell('NYSE 52주 신고가 vs 신저가', '', cn('stock_price_strength')),
+      cell('국내 전종목 52주 신고가 비율', state['fg-highlow'] != null ? num(state['fg-highlow'], 0) + '%' : '미수집', greed(scoreHighLow(state['fg-highlow'])))],
+    ['변동성',
+      cell('VIX <b>— 50일 평균 대비</b>', vixC && vixC.value != null ? `${num(vixC.value, 1)} (평균 ${num(vixC.base, 1)})` : '', cn('market_volatility_vix')),
+      cell('VKOSPI <b>— 수준 그대로</b>', state['fg-vkospi'] != null ? num(state['fg-vkospi'], 1) : '미수집', greed(scoreVkospiFG(state['fg-vkospi'])))],
+    ['시장 폭',
+      cell('오른 종목 vs 내린 종목 거래량', '', cn('stock_price_breadth')), cell('')],
+    ['옵션',
+      cell('풋/콜 옵션 비율', '', cn('put_call_options')), cell('')],
+    ['안전자산',
+      cell('주식 vs 국채 20일 수익률', '', cn('safe_haven_demand')), cell('')],
+    ['정크본드',
+      cell('하이일드 vs 투자등급 금리차', '', cn('junk_bond_demand')), cell('')],
+    ['과매도',
+      cell(''), cell('코스피 14일 RSI', state['fg-rsi'] != null ? num(state['fg-rsi']) : '미수집', greed(scoreKospiRsi(state['fg-rsi'])))],
+    ['수급',
+      cell(''), cell('외국인 순매수 5영업일 합계', state['fg-foreign'] != null ? num(state['fg-foreign'], 2) + '조' : '미수집', greed(scoreForeign(state['fg-foreign'])))],
+  ];
+  const fgScores = [scoreMomentum(state['fg-momentum']), scoreVkospiFG(state['fg-vkospi']),
+    scoreKospiRsi(state['fg-rsi']), scoreForeign(state['fg-foreign']), scoreHighLow(state['fg-highlow'])]
+    .filter(x => x != null);
+  const nFg = fgScores.length || 5;
+  const nCnn = Object.keys(cc).length || 7;
+  const fgNow = fgScores.length ? Math.round(100 - fgScores.reduce((a, b) => a + b, 0) / fgScores.length) : null;
+  fgPairs.push(['<b>지수</b>',
+    `<b>${nCnn}개 평균 = ${state['cnn-fg'] ?? '—'}</b>`,
+    `<b>${fgScores.length || '—'}개 평균 = ${fgNow ?? '—'}</b>`]);
+  fgPairs.forEach(r => { r[0] = `<span style="white-space:nowrap;">${r[0]}</span>`; });
+  const fgCompare = table(['성격', 'CNN (미국)', '똑재 (국내)'], fgPairs, ['l', 'l', 'l']);
+  const cnnNote = Object.keys(cc).length ? '' :
+    ' CNN 구성 지표별 점수는 다음 매크로 갱신부터 표시됩니다.';
+
+  // ── 4. 지표 하나의 몫 ──────────────────────────────────
+  // 두 시장 모두 변동성 지수가 '변동성 칸' 과 '공포탐욕 재료' 로 두 번 들어간다.
+  const st = share(w.rsi);
+  const each = k => st * SM_AXIS[k].w / SM_AXIS[k].n;
+  const cnnEach = share(w.fg) / nCnn;
+  const fgEach = share(w.fg) / nFg;
+  const vixEff = share(w.vix) + cnnEach;
+  const vkEff = share(w.vix) + fgEach;
+  const kr = v => `<span style="color:var(--kr-color);font-weight:700;">${v}</span>`;
+  const us = v => `<span style="color:var(--us-color);font-weight:700;">${v}</span>`;
+  const mute = t => `<span style="color:var(--ink-mute);font-size:12px;">${t}</span>`;
+  const pm = k => `최대 ±${(st / 100 * 50 * SM_AXIS[k]).toFixed(1)}점`;
+  const shareTbl = table(['지표', '미국·해외', '국내'], [
+    [`변동성 지수 ${mute('(변동성 칸 + 공포탐욕 재료)')}`, us(`VIX ${pc(vixEff)}`), kr(`VKOSPI ${pc(vkEff)}`)],
+    [`공포탐욕 나머지 재료 ${mute('(각)')}`, us(`${nCnn - 1}개 × ${pc(cnnEach)}`), kr(`${nFg - 1}개 × ${pc(fgEach)}`)],
+    [`RSI · 스토캐스틱 · CCI · Williams %R ${mute('(각)')}`, us(pc(each('oversold'))), kr(pc(each('oversold')))],
+    [`52주 고점 대비 · 이격도 20/60/120/200일 ${mute('(각)')}`, us(pc(each('drawdown'))), kr(pc(each('drawdown')))],
+    [`MFI · 거래량비율 · OBV ${mute('(각)')}`, us(pc(each('flow'))), kr(pc(each('flow')))],
+    [`반등 조짐 ${mute('(MACD 전환·볼린저 %B)')}`, pm('reversal'), pm('reversal')],
+    [`추세 위험 ${mute('(ADX/DI·50/200일선·연속하락·60일 모멘텀)')}`, pm('risk'), pm('risk')],
+  ], ['l', 'r', 'r']);
+
+  // ── 5. 종목 층 5개 축 ──────────────────────────────────
+  const nw = s => `<span style="white-space:nowrap;font-weight:700;">${s}</span>`;
+  const axisTbl = table(['축', '재료', '반영'], [
+    [nw('과매도'), 'RSI(14) · 스토캐스틱 · CCI(20) · Williams %R', '본체 40%'],
+    [nw('낙폭'), '52주 고점 대비 · 이격도 20/60/120/200일', '본체 35%'],
+    [nw('자금'), 'MFI(14) · 거래량비율 · OBV 20일 기울기', '본체 25%'],
+    [nw('반등'), 'MACD 히스토그램 전환 · 볼린저 %B', '가점 ×0.16'],
+    [nw('위험'), 'ADX/DI · 50/200일선 · 연속 하락일 · 60일 모멘텀', '감점 ×0.28'],
+  ], ['l', 'l', 'r']);
+  const formula = `
+    <div style="margin:10px 0 4px;padding:10px 12px;border-radius:10px;background:var(--bg-alt);
+      font-size:13px;line-height:1.8;font-variant-numeric:tabular-nums;">
+      본체 = 과매도×0.40 + 낙폭×0.35 + 자금×0.25<br>
+      원점수 = 본체 − (추세위험 − 50)×0.28 + (반등 − 50)×0.16<br>
+      종목점수 = 원점수를 0~100으로 고르게 편 값
+    </div>`;
+
+  // ── 6. 점수에 안 들어가는 것 ───────────────────────────
+  const li = (h, t) => `<li style="margin-bottom:6px;"><b>${h}</b> — ${t}</li>`;
+  const notIn = `<ul style="font-size:14px;line-height:1.7;color:var(--ink-soft);margin:0;padding-left:18px;">
+    ${li('개별 신호 칩 10개', '"RSI 30 이하" 같은 켜짐/꺼짐 표시. 왜 이 점수인지 보여주는 설명용입니다. 임계값을 아슬아슬하게 넘고 못 넘는 차이로 등급이 뛰지 않게 점수에서는 뺐습니다.')}
+    ${li('ATR(일평균 변동폭)', '다음 매수 간격(변동폭 × 1.5)을 제안하는 데만 씁니다. 등급·배수에는 영향이 없습니다.')}
+    ${li('떨어지는 칼날 경고', 'ADX 25 이상 + 하락 방향이면 배지를 띄웁니다. 감점은 이미 추세 위험 축에 들어가 있어 따로 깎지 않습니다.')}
+    ${li('참고 지표 타일', '금리·환율·주요 지수·원자재·신용 스프레드·밸류에이션(CAPE 등). 국면을 읽는 재료이고 점수에는 넣지 않습니다.')}
+    ${li('보조지표 표에만 있는 값', '20일 모멘텀·볼린저 밴드폭·52주 저점 대비·MACD 원값·구글시트 호환값.')}
+  </ul>`;
+
+  // ── 7. 9단계 ───────────────────────────────────────────
+  const tierTbl = table(['종합점수', '등급', '행동'], TIERS.map(t => [
+    `${t.min}~${t.max}`,
+    `<span style="color:${t.color};font-weight:800;">${t.label}</span>`,
+    t.multiplier > 0 ? `월정액 × ${t.multiplier}배` : t.sellPct ? `보유량 ${t.sellPct * 100}% 익절` : '매수 보류',
+  ]), ['l', 'l', 'r']);
+
+  const html = `
+    ${sec('한눈에 보기', flow + small('슬라이더(점수 가중치)를 움직이면 이 화면의 비중도 함께 바뀝니다.'))}
+    ${sec('① 시장 층 — 시장 전체가 얼마나 겁먹었나',
+      p('미국·해외 종목은 VIX와 CNN 공포탐욕지수, 국내 종목은 VKOSPI와 똑재 공포탐욕지수를 씁니다. 변동성이 클수록, 공포가 클수록 점수가 올라갑니다 — "남들이 겁낼 때 담는다"는 전제입니다.')
+      + marketTbl
+      + small('환산 예: VIX 20 → 30점, 30 → 60점, 50 이상 → 100점. 공포탐욕은 거꾸로 0 → 100점, 50 → 50점, 100 → 0점.'))}
+    ${sec('② 공포탐욕지수 — CNN(미국)과 똑재(국내)',
+      p('CNN 지수는 미국 시장만 봅니다. 그래서 국내는 CNN과 같은 방식으로 따로 만든 똑재 공포탐욕지수를 씁니다. 둘 다 재료를 <b>같은 비중으로 평균</b>하고, 0이 극단적 공포·100이 극단적 탐욕입니다.')
+      + fgCompare
+      + small(`모멘텀·신고가 비율·변동성 세 줄은 같은 개념입니다. CNN의 시장 폭·옵션·안전자산·정크본드 4개 대신 국내판은 코스피 RSI와 외국인 수급 2개를 넣었습니다.${cnnNote}`)
+      + small('변동성은 계산법이 다릅니다. CNN은 VIX를 50일 평균과 비교해 "평소보다 얼마나 튀었나"를 보고, 똑재는 VKOSPI 수준을 그대로 봅니다. 그래서 국내 쪽이 시장점수의 변동성 칸과 더 많이 겹칩니다.'))}
+    ${sec('③ 종목 층 — 이 종목이 얼마나 눌렸나',
+      p('보조지표 18개를 성격이 비슷한 것끼리 5개 축으로 묶습니다. 축 안에서는 <b>평균</b>이라, RSI·스토캐스틱처럼 같이 움직이는 지표가 여러 번 세지지 않습니다.')
+      + axisTbl + formula
+      + small('보조지표가 아직 없는 종목(상장 30거래일 미만 등)은 RSI 하나로 종목점수를 대신합니다. 지표는 매일 아침 전일 종가 기준으로 다시 계산합니다.'))}
+    ${sec('④ 지표 하나가 종합점수에서 차지하는 몫 (지금 가중치 기준)',
+      shareTbl
+      + small(`두 시장 모두 변동성 지수가 두 번 들어갑니다 — 시장점수의 변동성 칸에 한 번, 공포탐욕지수의 재료로 한 번. 그래서 VIX는 약 ${pc(vixEff)}, VKOSPI는 약 ${pc(vkEff)}를 차지합니다.`)
+      + small('종목 칸의 몫은 0~100으로 펴기 전 원점수 기준 근사치입니다. 한 축 안에서 값이 빈 지표가 있으면 남은 지표끼리 나눠 가집니다. 반등·추세위험은 비중이 아니라 50점을 기준으로 더하고 빼는 보정이라 "최대 ±점"으로 적었습니다.'))}
+    ${sec('⑤ 가져오지만 점수에는 안 넣는 것', notIn)}
+    ${sec('⑥ 종합점수 → 9단계 행동', tierTbl)}
+  `;
+  openModal('점수는 이렇게 계산됩니다', html);
+}
+window.showScoreMethod = showScoreMethod;
 
 // ============================================================
 // INIT

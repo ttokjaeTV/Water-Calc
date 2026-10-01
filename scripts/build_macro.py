@@ -67,7 +67,43 @@ def cnn_fear_greed():
     if f.get("score") is None:
         raise ValueError("score 없음")
     return {"value": round(f["score"]), "rating": f.get("rating", ""),
-            "prev": round(f.get("previous_close") or 0)}
+            "prev": round(f.get("previous_close") or 0),
+            "components": cnn_components(d)}
+
+
+# CNN 공포탐욕은 7개 지표를 같은 비중으로 평균 낸다. 같은 응답에 각 지표의
+# 점수(0 공포 ~ 100 탐욕)가 함께 실려 오므로, 설명 화면에서 똑재 공포탐욕 5개
+# 재료와 나란히 보여주려고 같이 담는다.
+#   ※ *_sp125(125일 이평선), *_vix_50(VIX 50일 이평선)은 짝 지표의 기준선이라
+#     점수가 짝과 같다. 따로 세면 8~9개가 되므로 빼고, 기준선 값만 옆에 붙인다.
+CNN_PAIR_BASE = {"market_momentum_sp500": "market_momentum_sp125",
+                 "market_volatility_vix": "market_volatility_vix_50"}
+CNN_SKIP = {"fear_and_greed", "fear_and_greed_historical",
+            "market_momentum_sp125", "market_volatility_vix_50"}
+
+
+def _last_y(block):
+    data = (block or {}).get("data") or []
+    try:
+        return round(float(data[-1]["y"]), 4) if data else None
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def cnn_components(d):
+    """키 이름이 바뀌어도 죽지 않게 score·rating 이 있는 블록을 전부 담는다."""
+    out = {}
+    for key, blk in d.items():
+        if key in CNN_SKIP or not isinstance(blk, dict) or blk.get("score") is None:
+            continue
+        item = {"score": round(float(blk["score"]), 1),
+                "rating": blk.get("rating", ""),
+                "value": _last_y(blk)}
+        base = CNN_PAIR_BASE.get(key)
+        if base and isinstance(d.get(base), dict):
+            item["base"] = _last_y(d[base])
+        out[key] = item
+    return out or None
 
 
 def vkospi():

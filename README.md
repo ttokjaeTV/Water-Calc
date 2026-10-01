@@ -99,7 +99,7 @@ score = base − (추세위험−50)×0.28 + (반등−50)×0.16
 **`SCORE_STRETCH` 앵커는 국내 493종목 하루치로 잡은 경험값이다.**
 분포가 한쪽으로 치우치면 다시 뽑아 갱신할 것. 축 가중치·앵커는
 `scripts/indicators.py` 의 `AXIS_WEIGHT` / `SCORE_STRETCH` 한 곳에 모아 뒀고,
-화면 문구는 `index.html` 의 `AXES` 가 짝을 이룬다. **둘을 같이 고칠 것.**
+화면 문구는 `index.html` 의 `AXES`, 설명 모달 비중은 `SM_AXIS` 가 짝을 이룬다. **셋을 같이 고칠 것.**
 
 ### 임계값 신호는 설명용으로만 남았다
 
@@ -154,7 +154,8 @@ TSLA 2026-09-04 기준 RSI가 시트 54.97 / 표준 50.93으로 갈린다. 둘 �
 ## 평소 운영
 
 - 손댈 게 없다. 평일 한국시간 07:00 전체 갱신, 10:00·16:00·22:00 매크로 갱신.
-- 점수 로직을 바꾸고 싶으면 `AXIS_WEIGHT` / `SCORE_STRETCH` + `index.html` 의 `AXES` 수정 후 push.
+- 점수 로직을 바꾸고 싶으면 `AXIS_WEIGHT` / `RISK_WEIGHT` / `REVERSAL_WEIGHT` / `SCORE_STRETCH` + `index.html` 의 `AXES`·`SM_AXIS` 수정 후 push.
+  `SM_AXIS` 는 '점수는 이렇게 계산됩니다' 설명 모달(`showScoreMethod`)이 지표별 반영 비중을 그릴 때 쓴다.
 
 ## 로컬 실행
 
