@@ -112,7 +112,8 @@ def rsi(closes: Sequence[float], n: int = 14) -> Optional[float]:
     if ag is None or al is None:
         return None
     if al == 0:
-        return 100.0
+        # 오르기만 했으면 100 이지만, 오르지도 내리지도 않았으면(가격 고정) 판단 근거가 없다 → 중립 50.
+        return 50.0 if ag == 0 else 100.0
     return 100.0 - (100.0 / (1.0 + ag / al))
 
 
@@ -589,7 +590,7 @@ def compute_axes(o: Dict) -> Dict:
 
 OVERSOLD_RULES = {
     "rsi":        ("rsi",        "<=", 30,   "RSI 30 이하"),
-    "stoch":      ("stoch_k",    "<=", 20,   "%K·%D 모두 20 이하"),
+    "stoch":      (("stoch_k_raw", "stoch_d"), "<=", 20, "%K·%D 모두 20 이하"),
     "macd":       ("macd_turn",  "==", "up", "MACD 히스토그램 상향 전환"),
     "boll":       ("boll_pb",    "<=", 0,    "볼린저 하단선 이탈"),
     "cci":        ("cci",        "<=", -100, "CCI -100 이하"),
@@ -602,7 +603,7 @@ OVERSOLD_RULES = {
 
 OVERBOUGHT_RULES = {
     "rsi":       ("rsi",        ">=", 70,     "RSI 70 이상"),
-    "stoch":     ("stoch_k",    ">=", 80,     "%K·%D 모두 80 이상"),
+    "stoch":     (("stoch_k_raw", "stoch_d"), ">=", 80, "%K·%D 모두 80 이상"),
     "macd":      ("macd_turn",  "==", "down", "MACD 히스토그램 하향 전환"),
     "boll":      ("boll_pb",    ">=", 100,    "볼린저 상단선 돌파"),
     "cci":       ("cci",        ">=", 100,    "CCI 100 이상"),
@@ -612,6 +613,28 @@ OVERBOUGHT_RULES = {
     "disp200":   ("disp200",    ">=", 20,     "200일선 +20% 이격"),
     "from_high": ("from_high",  ">=", -2,     "52주 고점 근접"),
 }
+
+
+def _rule_hit(o: Dict, f, op, thr) -> bool:
+    """필드가 튜플이면 '모두' 조건이다 (스토캐스틱 %K·%D)."""
+    if isinstance(f, tuple):
+        vals = [o.get(x) for x in f]
+        return all(v is not None for v in vals) and all(_passes(v, op, thr) for v in vals)
+    return _passes(o.get(f), op, thr)
+
+
+# 일평균 변동폭(ATR%)이 이보다 작으면 파킹·초단기채처럼 가격이 사실상 고정된 상품으로 본다.
+# 이런 상품은 하루 0.01%씩 오르기만 해도 RSI 100·스토캐스틱 100 이 나와 '과매수'로 잘못 잡힌다.
+CASH_LIKE_ATR_PCT = 0.1
+
+
+def signal_hits(o: Dict):
+    """과매도·과매수 규칙 판정. 현금성(가격 고정) 상품은 오실레이터 신호를 내지 않는다."""
+    if o.get("cash_like"):
+        return [], []
+    os_hits = [name for name, (f, op, thr, _) in OVERSOLD_RULES.items() if _rule_hit(o, f, op, thr)]
+    ob_hits = [name for name, (f, op, thr, _) in OVERBOUGHT_RULES.items() if _rule_hit(o, f, op, thr)]
+    return os_hits, ob_hits
 
 
 def _passes(val, op, thr) -> bool:
@@ -654,7 +677,9 @@ def compute_all(bars: List[Bar]) -> Dict:
         elif mh_prev >= 0 > mh:
             macd_turn = "down"
 
-    # 스토캐스틱은 %K·%D 동시 조건이라 대표값을 따로 만든다.
+    # 스토캐스틱 대표값 — 5축 점수(과매도 축)의 연속 점수용으로만 쓴다.
+    # 과매도·과매수 '신호' 판정은 signal_hits() 가 %K·%D 원값 둘 다로 한다.
+    # (전에는 이 대표값으로 판정해 %K 10·%D 25 처럼 한쪽만 20 이하인데도 신호가 났다.)
     stoch_k = None
     if k is not None and d is not None:
         stoch_k = max(k, d) if (k <= 20 and d <= 20) else (
@@ -694,10 +719,8 @@ def compute_all(bars: List[Bar]) -> Dict:
         "down_streak": down_streak(closes),
     })
 
-    os_hits = [name for name, (f, op, thr, _) in OVERSOLD_RULES.items()
-               if _passes(out.get(f), op, thr)]
-    ob_hits = [name for name, (f, op, thr, _) in OVERBOUGHT_RULES.items()
-               if _passes(out.get(f), op, thr)]
+    out["cash_like"] = bool(ap is not None and ap < CASH_LIKE_ATR_PCT)
+    os_hits, ob_hits = signal_hits(out)
 
     out["oversold"] = os_hits
     out["overbought"] = ob_hits

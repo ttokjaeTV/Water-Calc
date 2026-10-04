@@ -1240,6 +1240,7 @@ body {
         KRX 해설 기준으로 20선 초반이 안정적인 수준이고 30을 넘으면 변동성이 크다고 봅니다.
         미국보다 기준선이 조금 위에 있어 이 도구는 VIX와 다른 구간을 씁니다.
         국내 종목·국내상장 ETF 그룹에 적용됩니다.</p>
+        <p class="explain-note">※ 위 구간은 상태 표시용입니다. 시장점수로 바꿀 때는 VKOSPI도 <b>VIX와 같은 환산표</b>(10→0점 · 20→30점 · 30→60점 · 50→100점)를 씁니다.</p>
       </div>
 
       <div class="explain-item">
@@ -1573,7 +1574,8 @@ body {
           <li><b>MACD 히스토그램 전환</b> — 단기·장기 이동평균 간격이
             좁아지다 벌어지기 시작하는 순간. 음수에서 양수로 넘어가면 단기 반등 신호</li>
           <li><b>볼린저 %B</b> — 밴드 안에서의 위치. 하단을 이탈했다가
-            되밟고 올라오는 구간을 가장 좋게 봅니다</li>
+            되밟고 올라오는 구간을 가장 좋게 봅니다.
+            밴드 폭은 <b>표본 표준편차</b>(n−1)로 계산합니다(구글시트와 동일). HTS·트레이딩뷰는 모표준편차라 값이 조금 다를 수 있습니다</li>
         </ul>
       </div>
 
@@ -1915,7 +1917,7 @@ try {
 // 지표·현재가 같은 파생 데이터까지 localStorage 에 눌러 담으면, 서버 데이터가
 // 갱신돼도 화면은 예전에 저장된 값을 계속 본다. 실제로 5축 개편 전에 추가한
 // 종목이 '갱신 대기' 로 남아 있었다. 파생 데이터는 열 때마다 다시 읽는다.
-const TICKER_KEEP = ['id', 'ticker', 'name', 'group', 'market', 'holdings', 'avgPrice'];
+const TICKER_KEEP = ['id', 'ticker', 'name', 'group', 'market', 'holdings', 'avgPrice', 'avgMissing'];
 
 function saveState() {
   try {
@@ -2471,10 +2473,11 @@ function marketScoreOf(group) {
   const vix = group === 'kr' ? state.vkospi : state.vix;
   const fg = group === 'kr' ? state['kospi-fg'] : state['cnn-fg'];
   const vs = vixScore(vix), fs = fgScore(fg);
-  if (vs == null || fs == null) return null;
   const w = getWeights();
-  const mw = w.vix + w.fg;
-  return mw === 0 ? null : Math.round((vs * w.vix + fs * w.fg) / mw);
+  // 가중치가 0 인 재료는 값이 없어도 된다. 가중치가 있는 재료가 빠지면 계산하지 않는다.
+  if ((vs == null && w.vix > 0) || (fs == null && w.fg > 0)) return null;
+  const mw = (vs == null ? 0 : w.vix) + (fs == null ? 0 : w.fg);
+  return mw === 0 ? null : Math.round(((vs ?? 0) * w.vix + (fs ?? 0) * w.fg) / mw);
 }
 
 // t 는 종목 객체를 받는 게 정상이고, 숫자(RSI)를 넘겨도 예전처럼 동작한다.
@@ -2488,22 +2491,26 @@ function compositeScoreDetail(group, t) {
   const fg = group === 'kr' ? state['kospi-fg'] : state['cnn-fg'];
   const vs = vixScore(vix), fs = fgScore(fg), ss = stockScoreOf(t);
   const w = getWeights();
-  const total = w.vix + w.fg + w.rsi;
-  if (vs == null || fs == null || ss == null || total === 0) return null;
+  // 가중치 0 인 재료는 값이 없어도(예: VIX 수집 실패) 나머지로 계산한다.
+  // 가중치가 있는 재료가 비면 점수를 내지 않는다 — 빈 값을 임의로 채우지 않는다.
+  if ((vs == null && w.vix > 0) || (fs == null && w.fg > 0) || (ss == null && w.rsi > 0)) return null;
+  // 있는 재료의 가중치만 더해 다시 100으로 맞춘다.
+  const total = (vs == null ? 0 : w.vix) + (fs == null ? 0 : w.fg) + (ss == null ? 0 : w.rsi);
+  if (total === 0) return null;
 
   const ind = (t && typeof t === 'object') ? t.ind : null;
   return {
-    vix:   { raw: vix, score: vs, weight: w.vix, contribution: vs * w.vix / total },
-    fg:    { raw: fg,  score: fs, weight: w.fg,  contribution: fs * w.fg  / total },
+    vix:   { raw: vix, score: vs, weight: w.vix, contribution: (vs ?? 0) * w.vix / total },
+    fg:    { raw: fg,  score: fs, weight: w.fg,  contribution: (fs ?? 0) * w.fg  / total },
     rsi:   { raw: ind ? ind.rsi : (t && t.rsi), score: ss, weight: w.rsi,
-             contribution: ss * w.rsi / total },
+             contribution: (ss ?? 0) * w.rsi / total },
     market: marketScoreOf(group),
     stock: ss,
     signals: ind ? (ind.oversold ? String(ind.oversold).split('|').filter(Boolean) : []) : [],
     signalsOver: ind ? (ind.overbought ? String(ind.overbought).split('|').filter(Boolean) : []) : [],
     ruleTotal: 10,
     indicators: ind,
-    total: Math.round((vs * w.vix + fs * w.fg + ss * w.rsi) / total),
+    total: Math.round(((vs ?? 0) * w.vix + (fs ?? 0) * w.fg + (ss ?? 0) * w.rsi) / total),
   };
 }
 
@@ -2740,16 +2747,21 @@ function parsePortfolioFile(json) {
   const h = json?.data?.holdings;
   if (!Array.isArray(h)) throw new Error('holdings 를 찾을 수 없습니다. 포트폴리오 관리시트에서 저장한 파일이 맞는지 확인해주세요.');
 
-  const agg = new Map();   // code → {qty, cost, accts}
+  const agg = new Map();   // code → {qty, cost, costQty, accts}
+  // 평단가가 비었거나 0 인 로트는 '원가 미상'이다. 0원으로 넣으면 평단이 희석되므로
+  // 평단을 아는 로트끼리만 가중평균한다(수량은 전부 합산).
   let skipped = 0;
   for (const r of h) {
     const code = String(r?.code ?? '').trim().toUpperCase();
     const qty = Number(r?.qty);
     const avg = Number(r?.avg);
     if (!code || !Number.isFinite(qty) || qty <= 0) { skipped++; continue; }
-    const cur = agg.get(code) || { qty: 0, cost: 0, accts: new Set() };
+    const cur = agg.get(code) || { qty: 0, cost: 0, costQty: 0, accts: new Set() };
     cur.qty += qty;
-    cur.cost += qty * (Number.isFinite(avg) ? avg : 0);
+    if (String(r?.avg ?? '').trim() !== '' && Number.isFinite(avg) && avg > 0) {
+      cur.cost += qty * avg;
+      cur.costQty += qty;
+    }
     if (r.acct) cur.accts.add(r.acct);
     agg.set(code, cur);
   }
@@ -2787,7 +2799,8 @@ async function importPortfolio(file) {
       market: q.market,
       group: classifyTicker(q.ticker, q.name, q.market),
       holdings: Math.round(v.qty * 10000) / 10000,
-      avgPrice: v.qty ? Math.round(v.cost / v.qty * 100) / 100 : null,
+      avgPrice: v.costQty ? Math.round(v.cost / v.costQty * 100) / 100 : null,
+      avgMissing: !v.costQty,              // 평단을 아는 로트가 하나도 없다 → '평단 미입력'
       price: q.price, rsi: q.rsi, high52w: q.high52w, low52w: q.low52w,
       changeFromLow: q.changeFromLow, changeFromHigh: q.changeFromHigh,
       ind: q.ind, pending: q.pending, priceAsOf: q.priceAsOf, changePct: q.changePct,
@@ -2831,6 +2844,8 @@ function fmtQty(q) {
 
 // 평단가가 있으면 현재가 대비 손익률 배지. 포트폴리오 파일에서 들어온다.
 function plBadge(t) {
+  if (!t.avgPrice && t.avgMissing) return `<span class="pct-badge" style="color:var(--ink-mute);"
+    title="포트폴리오 파일에 평단가가 비어 있습니다">평단 미입력</span>`;
   if (!t.avgPrice || t.price == null) return '';
   const pct = (t.price - t.avgPrice) / t.avgPrice * 100;
   const up = pct >= 0;
@@ -3224,7 +3239,7 @@ function showIndicators(id) {
       ind.macd_turn === 'up' ? '⬆ 상향 전환 — 단기 반등 신호'
       : ind.macd_turn === 'down' ? '⬇ 하향 전환 — 단기 하락 신호' : '전환 없음'],
     ['볼린저 %B', fmt(ind.boll_pb, 1, '%'),
-      `하단 ${fmt(ind.boll_low, 2)} · 상단 ${fmt(ind.boll_up, 2)} (0% 이하면 하단 이탈)`],
+      `하단 ${fmt(ind.boll_low, 2)} · 상단 ${fmt(ind.boll_up, 2)} (0% 이하면 하단 이탈 · 표본 표준편차, 시트와 동일)`],
     ['밴드폭', fmt(ind.boll_bw, 1, '%'), '좁아질수록 변동성 축적'],
     ['CCI (20)', fmt(ind.cci, 1), '−100 이하 과매도'],
     ['Williams %R', fmt(ind.williams_r, 1), '−80 이하 과매도'],
@@ -3324,8 +3339,8 @@ function showIndicators(id) {
       <table style="width:100%;border-collapse:collapse;font-size: 13.5px;">
         <tr style="color:var(--ink-mute);font-size: 12px;">
           <td>재료</td><td style="text-align:right;">값 → 점수 × 비중</td><td style="text-align:right;">기여</td></tr>
-        ${contribRow(cdKr ? 'VKOSPI' : 'VIX', `${fmt(cd.vix.raw)} → ${cd.vix.score} × ${wp(cd.vix.weight)}%`, cd.vix.contribution)}
-        ${contribRow(cdKr ? '똑재 공포탐욕' : 'CNN 공포탐욕', `${fmt(cd.fg.raw, 0)} → ${cd.fg.score} × ${wp(cd.fg.weight)}%`, cd.fg.contribution)}
+        ${contribRow(cdKr ? 'VKOSPI' : 'VIX', `${fmt(cd.vix.raw)} → ${cd.vix.score ?? '—'} × ${wp(cd.vix.weight)}%`, cd.vix.contribution)}
+        ${contribRow(cdKr ? '똑재 공포탐욕' : 'CNN 공포탐욕', `${fmt(cd.fg.raw, 0)} → ${cd.fg.score ?? '—'} × ${wp(cd.fg.weight)}%`, cd.fg.contribution)}
         ${contribRow('종목점수 (아래 5개 축)', `${cd.rsi.score} × ${wp(cd.rsi.weight)}%`, cd.rsi.contribution)}
       </table>
       <div style="font-size: 12.5px;color:var(--ink-mute);margin-top:6px;">
@@ -3500,13 +3515,11 @@ function interpretVkospi(v) { return interpretVol(v, 'vkospi'); }
 function interpretFG(v) {
   if (v==null||isNaN(v)) return '';
   let cls, label;
-  // CNN 규칙: 0(극공포) ~ 100(극탐욕)
-  if (v<=20) { cls='extreme-fear'; label='🔥 극단적 공포 (매수 기회)'; }
-  else if (v<=30) { cls='fear'; label='😱 공포'; }
-  else if (v<=45) { cls='fear'; label='😐 약한 공포'; }
+  // CNN 공식 구간: 0–24 극단적 공포 · 25–44 공포 · 45–55 중립 · 56–75 탐욕 · 76–100 극단적 탐욕
+  if (v<25) { cls='extreme-fear'; label='🔥 극단적 공포 (매수 기회)'; }
+  else if (v<45) { cls='fear'; label='😱 공포'; }
   else if (v<=55) { cls='neutral'; label='⚖️ 중립'; }
-  else if (v<=70) { cls='greed'; label='😊 탐욕'; }
-  else if (v<=80) { cls='greed'; label='🤑 강한 탐욕'; }
+  else if (v<=75) { cls='greed'; label='😊 탐욕'; }
   else { cls='extreme-greed'; label='🚨 극단적 탐욕 (위험)'; }
   const pct = Math.min(100, Math.max(0, v));
   return `<span class="status-badge ${cls}">${label}</span>
@@ -3677,7 +3690,12 @@ function renderGroup(group) {
       } else if (tier.sellPct) {
         actionText = `보유량 ${tier.sellPct*100}% 익절`;
         actionColor = tier.color;
-        if (t.holdings > 0) actionText += ` (${Math.floor(t.holdings * tier.sellPct)}주)`;
+        // 보유가 적으면 10%가 1주도 안 된다. 1주를 팔면 비율이 10%가 아니라 20% 이상이 되므로
+        // 억지로 1주로 올리지 않고 이번 구간은 건너뛴다고 알려 준다.
+        if (t.holdings > 0) {
+          const n = Math.floor(t.holdings * tier.sellPct);
+          actionText += n >= 1 ? ` (${n}주)` : ' (1주 미만 — 익절 생략)';
+        }
       } else {
         actionText = '매수 보류';
         actionColor = tier.color;
@@ -4479,8 +4497,8 @@ async function refreshAll() {
         const gaugeEl = document.getElementById('ddokjae-value');
         if (gaugeEl) {
           gaugeEl.textContent = ttokjaeFG;
-          const label = ttokjaeFG<=20?'극공포':ttokjaeFG<=40?'공포':ttokjaeFG<=60?'중립':ttokjaeFG<=80?'탐욕':'극탐욕';
-          const color = ttokjaeFG<=20?'#3F6B4A':ttokjaeFG<=40?'#5A7C5A':ttokjaeFG<=60?'#8A6D3B':ttokjaeFG<=80?'#B8813F':'#A03D1F';
+          const label = ttokjaeFG<25?'극공포':ttokjaeFG<45?'공포':ttokjaeFG<=55?'중립':ttokjaeFG<=75?'탐욕':'극탐욕';
+          const color = ttokjaeFG<25?'#3F6B4A':ttokjaeFG<45?'#5A7C5A':ttokjaeFG<=55?'#8A6D3B':ttokjaeFG<=75?'#B8813F':'#A03D1F';
           const statusEl = document.getElementById('ddokjae-status');
           if (statusEl) { statusEl.textContent = label; statusEl.style.background = color; statusEl.style.color = 'var(--white)'; }
           gaugeEl.style.color = color;
@@ -4530,7 +4548,9 @@ async function refreshAll() {
 // TTOKJAE F&G
 // ============================================================
 function scoreMomentum(p) { if(p==null)return null; return p<=-10?100:p<=-5?85:p<=-2?70:p<=2?50:p<=5?30:p<=10?15:0; }
-function scoreVkospiFG(v) { if(v==null)return null; return v>=40?100:v>=30?85:v>=25?70:v>=20?50:v>=15?30:15; }
+// 다른 네 재료처럼 7단계(100·85·70·50·30·15·0)로 맞춘다. 전에는 15 미만도 15점이라
+// 공포 점수가 0 이 될 수 없었고, 그래서 똑재 지수가 100(극단적 탐욕)에 닿을 수 없었다.
+function scoreVkospiFG(v) { if(v==null)return null; return v>=40?100:v>=30?85:v>=25?70:v>=20?50:v>=15?30:v>=12?15:0; }
 function scoreKospiRsi(r) { if(r==null)return null; return r<30?100:r<40?80:r<50?60:r<60?40:r<70?20:0; }
 function scoreForeign(t) { if(t==null)return null; return t<=-5?100:t<=-3?85:t<=-1?70:t<=1?50:t<=3?30:t<=5?15:0; }
 function scoreHighLow(p) { if(p==null)return null; return p<=10?100:p<=20?85:p<=35?70:p<=50?50:p<=70?30:p<=85?15:0; }
@@ -4567,8 +4587,8 @@ function calculateTtokjaeFG() {
   
   // Update gauge
   document.getElementById('ddokjae-value').textContent = ttokjaeFG;
-  const label = ttokjaeFG<=20?'극공포':ttokjaeFG<=40?'공포':ttokjaeFG<=60?'중립':ttokjaeFG<=80?'탐욕':'극탐욕';
-  const color = ttokjaeFG<=20?'#3F6B4A':ttokjaeFG<=40?'#5A7C5A':ttokjaeFG<=60?'#8A6D3B':ttokjaeFG<=80?'#B8813F':'#A03D1F';
+  const label = ttokjaeFG<25?'극공포':ttokjaeFG<45?'공포':ttokjaeFG<=55?'중립':ttokjaeFG<=75?'탐욕':'극탐욕';
+  const color = ttokjaeFG<25?'#3F6B4A':ttokjaeFG<45?'#5A7C5A':ttokjaeFG<=55?'#8A6D3B':ttokjaeFG<=75?'#B8813F':'#A03D1F';
   const statusEl = document.getElementById('ddokjae-status');
   statusEl.textContent = label;
   statusEl.style.background = color;
