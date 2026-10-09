@@ -903,6 +903,8 @@ body {
   font-size: 13px; font-weight: 700; white-space: nowrap;
 }
 .action-amount { font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 16px; }
+/* 익절 신호의 주수·생략 안내는 둘째 줄로 내려 칸 폭을 줄인다 */
+.action-sub { display: block; font-size: 12.5px; font-weight: 600; opacity: .85; margin-top: 2px; }
 
 .empty-state { text-align: center; padding: 32px 20px; color: var(--text-mute); }
 .empty-state .icon { font-size: 35px; margin-bottom: 8px; opacity: 0.5; }
@@ -3892,7 +3894,7 @@ function renderGroup(group) {
         // 억지로 1주로 올리지 않고 이번 구간은 건너뛴다고 알려 준다.
         if (t.holdings > 0) {
           const n = Math.floor(t.holdings * tier.sellPct);
-          actionText += n >= 1 ? ` (${n}주)` : ' (1주 미만 — 익절 생략)';
+          actionText += `<span class="action-sub">${n >= 1 ? `${n}주 매도` : '1주 미만 — 익절 생략'}</span>`;
         }
       } else {
         actionText = '매수 보류';
