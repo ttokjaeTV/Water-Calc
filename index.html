@@ -1071,6 +1071,96 @@ body {
   color: var(--text-mute); font-size: 14px; line-height: 1.8;
 }
 .footer .disclaimer { max-width: 700px; margin: 0 auto; font-size: 13px; opacity: 0.7; }
+
+/* ── 평단·본전 계산기 (STEP 06) ── */
+.be-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.be-top label { font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+.be-select {
+  flex: 1; min-width: 200px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; font-family: inherit; font-size: 15px; color: var(--ink); outline: none;
+}
+.be-select:focus { border-color: var(--accent); }
+.be-cur { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.be-cur button, .be-seg button {
+  background: var(--bg); border: none; padding: 9px 14px; font-family: inherit; font-size: 14px;
+  font-weight: 700; color: var(--ink-mute); cursor: pointer;
+}
+.be-cur button + button, .be-seg button + button { border-left: 1px solid var(--border); }
+.be-cur button.on, .be-seg button.on { background: var(--dark-warm); color: var(--white); }
+.be-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.be-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.be-field > span { font-size: 13.5px; font-weight: 700; color: var(--ink-soft); }
+.be-field > em { font-style: normal; font-size: 12px; color: var(--ink-mute); line-height: 1.45; }
+.be-in-wrap { position: relative; }
+.be-in {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 11px 38px 11px 12px; font-family: inherit; font-variant-numeric: tabular-nums;
+  font-size: 16px; font-weight: 700; color: var(--ink); text-align: right; outline: none;
+}
+.be-in:focus { border-color: var(--accent); }
+.be-in-unit { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--ink-mute); font-weight: 700; pointer-events: none; }
+.be-sub { font-size: 14px; font-weight: 800; color: var(--ink); margin: 20px 0 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.be-sub small { font-size: 12.5px; font-weight: 600; color: var(--ink-mute); }
+.be-seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-wrap: wrap; }
+.be-cost { margin-top: 14px; background: var(--bg-alt); border-radius: 10px; padding: 12px 14px; }
+.be-cost-head { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+.be-cost-head input { width: 17px; height: 17px; accent-color: var(--accent); }
+.be-cost-body { display: none; margin-top: 12px; }
+.be-cost.on .be-cost-body { display: block; }
+.be-cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.be-note { font-size: 12.5px; color: var(--ink-mute); line-height: 1.65; margin-top: 8px; }
+
+.be-result { margin-top: 22px; }
+.be-empty { text-align: center; padding: 26px 12px; color: var(--ink-mute); font-size: 14.5px; background: var(--bg-alt); border-radius: 12px; }
+.be-hero { background: var(--dark-warm); color: var(--white); border-radius: 14px; padding: 20px 22px; }
+.be-hero-label { font-size: 13px; font-weight: 700; color: var(--beige-gold); letter-spacing: .5px; }
+.be-hero-main { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.be-hero-num { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; line-height: 1.15; }
+.be-hero-num.old { font-size: 22px; color: var(--beige-gold); text-decoration: line-through; text-decoration-thickness: 2px; }
+.be-hero-arrow { font-size: 20px; color: var(--beige-gold); }
+.be-hero-desc { font-size: 14.5px; line-height: 1.7; margin-top: 8px; color: #EDE3D3; }
+.be-hero-desc b { color: #FFE066; font-weight: 800; }
+.be-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.be-card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.be-card.after { border-color: var(--accent); background: rgba(217,84,43,.04); }
+.be-card-title { font-size: 14px; font-weight: 800; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.be-card-title .be-chip { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: var(--accent); color: var(--white); }
+.be-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--border); font-size: 14px; }
+.be-row:last-child { border-bottom: none; }
+.be-row span { color: var(--ink-soft); font-weight: 600; }
+.be-row b { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+.be-row.key b { font-size: 16px; }
+.be-pos { color: var(--red); }   /* 상승·수익 */
+.be-neg { color: var(--green); } /* 하락·손실 — 사이트 기존 배지(pct-down)와 같은 색 */
+.be-warn { margin-top: 12px; background: rgba(160,61,31,.07); border: 1px solid rgba(160,61,31,.35); border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.7; color: var(--ink-soft); }
+.be-warn b { color: var(--ink); font-weight: 800; }
+.be-table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 14px; }
+.be-table th { background: var(--bg-alt); color: var(--ink-mute); font-size: 12.5px; font-weight: 700; padding: 9px 8px; text-align: right; }
+.be-table th:first-child, .be-table td:first-child { text-align: left; }
+.be-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; vertical-align: top; }
+.be-table td b { font-weight: 800; }
+.be-table td small { display: block; font-size: 12.5px; font-weight: 700; margin-top: 1px; }
+.be-table tr.hl td { background: rgba(217,84,43,.08); }
+.be-table td.be-t-label { font-weight: 800; white-space: nowrap; }
+.be-custom { display: inline-flex; align-items: center; gap: 4px; }
+.be-custom input { width: 64px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--white); font-family: inherit; font-weight: 800; font-size: 14px; text-align: right; }
+.be-recover-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 10px; }
+.be-rc { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px 6px; text-align: center; }
+.be-rc .l { font-size: 13px; font-weight: 700; color: var(--green); }
+.be-rc .r { font-size: 16px; font-weight: 800; color: var(--red); font-variant-numeric: tabular-nums; }
+.be-rc.hl { border-color: var(--accent); background: var(--accent-soft); }
+@media (max-width: 768px) {
+  .be-grid { grid-template-columns: 1fr 1fr; }
+  .be-grid.be-g3 .be-field:first-child { grid-column: 1 / -1; }
+  .be-lbl { display: none; }
+  .be-cards { grid-template-columns: 1fr; }
+  .be-cost-grid { grid-template-columns: 1fr; }
+  .be-hero { padding: 16px; }
+  .be-hero-num { font-size: 28px; }
+  .be-recover-grid { grid-template-columns: repeat(3, 1fr); }
+  .be-table { font-size: 13.5px; }
+  .be-table th, .be-table td { padding: 8px 5px; }
+}
 </style>
 </head>
 <body>
@@ -1701,6 +1791,113 @@ body {
       과거 사례와 비슷한 점수가 나오면 해당 구간의 전략을 참고하세요. 연속 함수 기반이라 동일 점수 ≒ 동일 시장 상태.
     </div>
   </div>
+</div>
+
+<div class="step-label">
+  <div class="step-line"></div>
+  <span class="step-text"><span class="step-en">STEP 06</span> / 평단·본전 계산</span>
+</div>
+
+<!-- 평단·본전 계산기: 물타기 후 평단, 본전·목표 수익까지 필요한 상승률 -->
+<div class="card" id="be-card">
+  <div class="card-title">물타기 하면 평단은 얼마가 되고, 몇 % 올라야 본전일까?</div>
+  <div class="card-subtitle">추가로 사면 평균단가가 어떻게 바뀌는지, 지금 가격에서 본전과 목표 수익까지 몇 % 올라야 하는지 계산합니다.</div>
+
+  <div class="be-top">
+    <label for="be-ticker">종목 불러오기</label>
+    <select class="be-select" id="be-ticker">
+      <option value="">직접 입력</option>
+    </select>
+    <div class="be-cur" id="be-cur">
+      <button type="button" data-cur="₩" class="on">원 ₩</button>
+      <button type="button" data-cur="$">달러 $</button>
+    </div>
+  </div>
+
+  <div class="be-grid be-g3">
+    <label class="be-field">
+      <span>현재가</span>
+      <div class="be-in-wrap"><input class="be-in" id="be-price" inputmode="decimal" autocomplete="off" placeholder="0"><i class="be-in-unit be-unit">원</i></div>
+    </label>
+    <label class="be-field">
+      <span>보유 수량</span>
+      <div class="be-in-wrap"><input class="be-in" id="be-qty" inputmode="decimal" autocomplete="off" placeholder="0"><i class="be-in-unit">주</i></div>
+    </label>
+    <label class="be-field">
+      <span>평균 단가</span>
+      <div class="be-in-wrap"><input class="be-in" id="be-avg" inputmode="decimal" autocomplete="off" placeholder="0"><i class="be-in-unit be-unit">원</i></div>
+    </label>
+  </div>
+
+  <div class="be-sub">
+    추가 매수
+    <div class="be-seg" id="be-mode">
+      <button type="button" data-mode="qty" class="on">수량으로</button>
+      <button type="button" data-mode="amt">금액으로</button>
+      <button type="button" data-mode="target">목표 평단으로</button>
+    </div>
+  </div>
+  <div class="be-grid">
+    <label class="be-field" id="be-f-qty">
+      <span>추가 매수 수량</span>
+      <div class="be-in-wrap"><input class="be-in" id="be-add-qty" inputmode="decimal" autocomplete="off" placeholder="0"><i class="be-in-unit">주</i></div>
+    </label>
+    <label class="be-field" id="be-f-amt" style="display:none;">
+      <span>추가 매수 금액</span>
+      <div class="be-in-wrap"><input class="be-in" id="be-add-amt" inputmode="decimal" autocomplete="off" placeholder="0"><i class="be-in-unit be-unit">원</i></div>
+      <em>매수 단가로 살 수 있는 만큼 정수 주로 계산합니다.</em>
+    </label>
+    <label class="be-field" id="be-f-target" style="display:none;">
+      <span>목표 평균 단가</span>
+      <div class="be-in-wrap"><input class="be-in" id="be-target" inputmode="decimal" autocomplete="off" placeholder="0"><i class="be-in-unit be-unit">원</i></div>
+      <em>매수 단가보다 높고 지금 평단보다 낮아야 합니다.</em>
+    </label>
+    <label class="be-field">
+      <span>매수 단가</span>
+      <div class="be-in-wrap"><input class="be-in" id="be-buy" inputmode="decimal" autocomplete="off" placeholder="비우면 현재가"><i class="be-in-unit be-unit">원</i></div>
+      <em>비워 두면 현재가에 산다고 봅니다.</em>
+    </label>
+  </div>
+
+  <div class="be-cost" id="be-cost">
+    <label class="be-cost-head"><input type="checkbox" id="be-cost-on"> 매매 수수료·거래세까지 넣어서 계산</label>
+    <div class="be-cost-body">
+      <div class="be-cost-grid">
+        <label class="be-field">
+          <span>증권사 수수료 (살 때·팔 때 각각)</span>
+          <div class="be-in-wrap"><input class="be-in" id="be-fee" inputmode="decimal" autocomplete="off" value="0.015"><i class="be-in-unit">%</i></div>
+          <em>증권사·계좌마다 다릅니다. 내 증권사 수수료로 바꿔 넣으세요.</em>
+        </label>
+        <label class="be-field">
+          <span>팔 때 거래세</span>
+          <select class="be-select" id="be-tax" style="flex:none;">
+            <option value="0">0% — 국내 상장 ETF · 미국 주식</option>
+            <option value="0.20">0.20% — 코스피 · 코스닥 주식 (2026년)</option>
+            <option value="0.10">0.10% — 코넥스 주식 (2026년)</option>
+          </select>
+        </label>
+      </div>
+      <div class="be-note">
+        거래세율은 2026년 1월 1일 이후 매도분 기준입니다(코스피 0.20%는 농어촌특별세 0.15% 포함).
+        매매차익에 붙는 세금(해외주식 양도소득세, 국내 상장 해외 ETF 배당소득세)은 <b>이익이 났을 때만</b> 붙기 때문에 본전 가격에는 영향이 없고,
+        아래 목표 수익 행은 이 세금을 빼기 전 기준입니다. 해외주식 환전 비용은 넣지 않았습니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="be-result" id="be-result">
+    <div class="be-empty">현재가 · 보유 수량 · 평균 단가를 넣으면 계산됩니다.</div>
+  </div>
+
+  <details class="explain" style="margin-top:16px;">
+    <summary>떨어진 만큼만 오르면 본전 아닌가요? <span class="explain-more">손실률별 필요 상승률 펼쳐보기</span></summary>
+    <div class="explain-body">
+      <p>아닙니다. 1만원이 30% 떨어지면 7,000원인데, 7,000원에서 30% 오르면 9,100원입니다. 본전 1만원까지 가려면 <b>42.9%</b>가 올라야 합니다.
+        손실은 줄어든 금액에서 다시 출발하기 때문에, 깊게 빠질수록 회복에 필요한 상승률이 훨씬 가파르게 커집니다.</p>
+      <div class="be-recover-grid" id="be-recover"></div>
+      <p class="be-note" style="margin-top:10px;">필요 상승률 = 손실률 ÷ (100 − 손실률). 수수료·세금은 빼고 계산한 값입니다. 지금 손실과 가장 가까운 칸이 표시됩니다.</p>
+    </div>
+  </details>
 </div>
 
 <div class="step-label">
@@ -3640,6 +3837,7 @@ window.removeTicker = removeTicker;
 function renderGroups() {
   ['us', 'intl', 'kr'].forEach(renderGroup);
   renderHistory();
+  if (typeof renderBreakevenTickers === 'function') renderBreakevenTickers();   // STEP 06 종목 불러오기 목록
 }
 
 function renderGroup(group) {
@@ -5013,6 +5211,304 @@ DS.init().then(renderMacroExtra).catch(() => {});
   }));
   renderGroups();
 })();
+
+// ============================================================
+// STEP 06 — 평단·본전 계산기
+// 물타기(추가 매수) 후 새 평균단가, 그리고 현재가에서 본전·목표 수익까지 필요한 상승률.
+//   새 평단      = (보유수량 × 평단 + 추가수량 × 매수단가) ÷ (보유수량 + 추가수량)
+//   본전 가격    = 투입원금 ÷ (총수량 × (1 − 매도수수료 − 거래세))     ← 비용 미반영이면 = 평단
+//   필요 상승률  = 본전 가격 ÷ 현재가 − 1
+//   목표가(r%)   = 투입원금 × (1 + r) ÷ (총수량 × (1 − 매도수수료 − 거래세))
+//   목표 평단 역산 수량 = 보유수량 × (평단 − 목표평단) ÷ (목표평단 − 매수단가)   (올림)
+// 투입원금은 비용 반영 시 (보유분 + 추가분) 매입금액 × (1 + 매수수수료). 평단 입력값은 증권사 표시처럼
+// 수수료를 뺀 순수 가격으로 보고, 보유분에도 같은 매수수수료를 얹는다.
+// ============================================================
+const BE_KEY = 'ttokjae_be_v1';
+const BE_TARGETS = [0, 5, 10, 20, 30];
+const BE_LOSSES = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90];
+const be = { cur: '₩', mode: 'qty', custom: 50 };
+
+function beEl(id) { return document.getElementById(id); }
+function beNum(id) {
+  const v = String(beEl(id)?.value ?? '').replace(/,/g, '').trim();
+  if (v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+function beIsUsd() { return be.cur === '$'; }
+// 가격 표시. 본전·목표가는 그 가격 이상에 팔아야 하므로 올림(ceil)으로 보여 준다.
+function beMoney(v, { ceil = false, sign = false } = {}) {
+  if (v == null || !Number.isFinite(v)) return '-';
+  const d = beIsUsd() ? 2 : 0;
+  const k = Math.pow(10, d);
+  let x = ceil ? Math.ceil(v * k - 1e-9) / k : Math.round(v * k) / k;
+  if (Object.is(x, -0)) x = 0;
+  const s = Math.abs(x).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const pre = x < 0 ? '−' : (sign && x > 0 ? '+' : '');
+  return beIsUsd() ? `${pre}$${s}` : `${pre}${s}원`;
+}
+function bePct(v, d = 1) {
+  if (v == null || !Number.isFinite(v)) return '-';
+  const x = Math.round(v * 100 * Math.pow(10, d)) / Math.pow(10, d);
+  return `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toFixed(d)}%`;
+}
+// 금액 뒤 조사. 원화는 '원'(받침 있음), 달러는 'N달러'로 읽으니 받침 없음.
+function beJ(withB, noB) { return beIsUsd() ? noB : withB; }
+function beQty(q) { return `${(Math.round(q * 10000) / 10000).toLocaleString('ko-KR')}주`; }
+function beCls(v) { return v > 1e-9 ? 'be-pos' : v < -1e-9 ? 'be-neg' : ''; }
+
+function beFormatInput(inp) {
+  const raw = inp.value.replace(/,/g, '').trim();
+  if (raw === '' || !Number.isFinite(Number(raw))) return;
+  const [i, f] = raw.split('.');
+  inp.value = Number(i || 0).toLocaleString('ko-KR') + (f !== undefined ? '.' + f : '');
+}
+
+function beSave() {
+  try {
+    const o = { cur: be.cur, mode: be.mode, custom: be.custom, costOn: beEl('be-cost-on').checked, tax: beEl('be-tax').value };
+    ['be-price', 'be-qty', 'be-avg', 'be-add-qty', 'be-add-amt', 'be-target', 'be-buy', 'be-fee'].forEach(id => { o[id] = beEl(id).value; });
+    localStorage.setItem(BE_KEY, JSON.stringify(o));
+  } catch (e) { /* 저장이 막힌 브라우저에서도 계산은 된다 */ }
+}
+function beLoad() {
+  try {
+    const o = JSON.parse(localStorage.getItem(BE_KEY) || 'null');
+    if (!o) return;
+    ['be-price', 'be-qty', 'be-avg', 'be-add-qty', 'be-add-amt', 'be-target', 'be-buy', 'be-fee'].forEach(id => { if (o[id] != null) beEl(id).value = o[id]; });
+    if (o.cur) be.cur = o.cur;
+    if (o.mode) be.mode = o.mode;
+    if (Number.isFinite(o.custom)) be.custom = o.custom;
+    beEl('be-cost-on').checked = !!o.costOn;
+    if (o.tax != null) beEl('be-tax').value = o.tax;
+  } catch (e) {}
+}
+
+function beSetCur(cur) {
+  be.cur = cur;
+  document.querySelectorAll('#be-cur button').forEach(b => b.classList.toggle('on', b.dataset.cur === cur));
+  document.querySelectorAll('#be-card .be-unit').forEach(u => { u.textContent = cur === '$' ? '$' : '원'; });
+}
+function beSetMode(mode) {
+  be.mode = mode;
+  document.querySelectorAll('#be-mode button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+  beEl('be-f-qty').style.display = mode === 'qty' ? '' : 'none';
+  beEl('be-f-amt').style.display = mode === 'amt' ? '' : 'none';
+  beEl('be-f-target').style.display = mode === 'target' ? '' : 'none';
+}
+
+// STEP 02 에 등록한 종목을 불러오기 목록으로. renderGroups() 끝에서 매번 다시 그린다.
+function renderBreakevenTickers() {
+  const sel = beEl('be-ticker');
+  if (!sel) return;
+  const keep = sel.value;
+  const list = (state.tickers || []).filter(t => !t.loading && !t.error);
+  sel.innerHTML = '<option value="">직접 입력</option>' + list.map(t => {
+    const extra = t.holdings > 0 ? ` · ${fmtQtyPlain(t.holdings)}주` : '';
+    return `<option value="${t.id}">${String(t.name || t.ticker).replace(/</g, '&lt;')} (${t.ticker})${extra}</option>`;
+  }).join('');
+  if (keep && list.some(t => String(t.id) === keep)) sel.value = keep;
+}
+function fmtQtyPlain(q) { return (Math.round(q * 10000) / 10000).toLocaleString('ko-KR'); }
+
+function beLoadTicker(id) {
+  const t = (state.tickers || []).find(x => String(x.id) === String(id));
+  if (!t) return;
+  beSetCur(t.group === 'us' ? '$' : '₩');
+  const d = t.group === 'us' ? 2 : 0;
+  const put = (elId, v) => { beEl(elId).value = (v != null && Number.isFinite(Number(v)) && Number(v) > 0) ? Number(v).toLocaleString('ko-KR', { maximumFractionDigits: elId === 'be-qty' ? 4 : d }) : ''; };
+  put('be-price', t.price);
+  put('be-qty', t.holdings);
+  put('be-avg', t.avgPrice);
+  beEl('be-buy').value = '';
+  // 국내 그룹은 대부분 ETF 라 거래세 0, 개별주식이면 사용자가 바꾼다. 미국은 거래세 없음.
+  beCalc();
+}
+
+function beCalc() {
+  const out = beEl('be-result');
+  const P = beNum('be-price'), Q0 = beNum('be-qty'), A0 = beNum('be-avg');
+  const B = beNum('be-buy') ?? P;
+  const costOn = beEl('be-cost-on').checked;
+  const f = costOn ? Math.max(0, beNum('be-fee') ?? 0) / 100 : 0;
+  const tx = costOn ? Math.max(0, Number(beEl('be-tax').value) || 0) / 100 : 0;
+  const sellKeep = 1 - f - tx;            // 팔 때 손에 남는 비율
+  beSave();
+  renderBeRecover(P && A0 ? (A0 - P) / A0 * 100 : null);
+
+  if (!(P > 0) || !(Q0 > 0) || !(A0 > 0)) {
+    out.innerHTML = '<div class="be-empty">현재가 · 보유 수량 · 평균 단가를 넣으면 계산됩니다.</div>';
+    return;
+  }
+
+  // ── 추가 매수 수량 ──
+  let q = 0, modeMsg = '';
+  if (be.mode === 'qty') {
+    q = Math.max(0, beNum('be-add-qty') ?? 0);
+  } else if (be.mode === 'amt') {
+    const amt = beNum('be-add-amt') ?? 0;
+    if (amt > 0 && B > 0) {
+      q = Math.floor(amt / (B * (1 + f)) + 1e-9);
+      if (q < 1) modeMsg = `이 금액으로는 매수 단가 ${beMoney(B)}에 1주도 살 수 없습니다.`;
+    }
+  } else {
+    const T = beNum('be-target');
+    if (T > 0) {
+      if (!(B > 0)) modeMsg = '매수 단가가 필요합니다.';
+      else if (T >= A0) modeMsg = `목표 평단(${beMoney(T)})이 지금 평단(${beMoney(A0)})보다 낮아야 합니다.`;
+      else if (T <= B) modeMsg = `목표 평단을 매수 단가(${beMoney(B)}) 이하로는 만들 수 없습니다. 아무리 많이 사도 평단은 매수 단가에 가까워질 뿐입니다.`;
+      else q = Math.ceil(Q0 * (A0 - T) / (T - B) - 1e-9);
+    }
+  }
+  if (!(B > 0)) q = 0;
+
+  const Q1 = Q0 + q;
+  const A1 = q > 0 ? (Q0 * A0 + q * B) / Q1 : A0;
+  const inv0 = Q0 * A0 * (1 + f);
+  const inv1 = (Q0 * A0 + q * B) * (1 + f);
+  const be0 = inv0 / (Q0 * sellKeep);
+  const be1 = inv1 / (Q1 * sellKeep);
+  const need0 = be0 / P - 1, need1 = be1 / P - 1;
+  const pl0 = P * Q0 * sellKeep - inv0, pl1 = P * Q1 * sellKeep - inv1;
+  const has = q > 0;
+  const isPyramid = has && B > A0;         // 평단보다 비싸게 사면 평단이 오른다(불타기)
+  // 비용 미반영이면 본전 = 평단이라 같은 반올림을 쓴다. 비용 반영 시에는 그 가격 이상에 팔아야 하므로 올림.
+  const UP = { ceil: costOn };
+  const afterLabel = (isPyramid || need0 <= 0) ? '추가 매수 후' : '물타기 후';
+
+  // ── 상단 요약 ──
+  let hero;
+  if (need0 <= 0) {
+    hero = `<div class="be-hero-label">지금 이미 본전 위에 있습니다</div>
+      <div class="be-hero-main"><span class="be-hero-num">${bePct(pl0 / inv0)}</span></div>
+      <div class="be-hero-desc">현재가가 본전 가격(${beMoney(be0, UP)})보다 높습니다.${
+        has ? ` 여기서 ${beQty(q)}를 더 사면 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} ${A1 > A0 ? '올라갑니다' : '내려갑니다'}${need1 > 0 ? `. 이 경우 본전까지 <b>${bePct(need1)}</b>가 다시 필요해집니다` : ''}.` : ''}</div>`;
+  } else if (has && !isPyramid) {
+    const ratio = inv1 / inv0;
+    hero = `<div class="be-hero-label">본전까지 필요한 상승률</div>
+      <div class="be-hero-main">
+        <span class="be-hero-num old">${bePct(need0)}</span><span class="be-hero-arrow">→</span>
+        <span class="be-hero-num">${bePct(need1)}</span>
+      </div>
+      <div class="be-hero-desc">${beQty(q)}를 ${beMoney(B)}에 더 사면 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} ${bePct(A1 / A0 - 1)} 내려가고,
+        본전 가격은 <b>${beMoney(be1, UP)}</b>${beJ('이','가')} 됩니다. 대신 들어간 돈은 ${beMoney(inv0)} → ${beMoney(inv1)}${beJ('으로','로')} <b>${ratio.toFixed(2)}배</b>가 됩니다.</div>`;
+  } else {
+    hero = `<div class="be-hero-label">본전까지 필요한 상승률</div>
+      <div class="be-hero-main"><span class="be-hero-num">${bePct(has ? need1 : need0)}</span></div>
+      <div class="be-hero-desc">${has
+        ? `매수 단가(${beMoney(B)})가 지금 평단보다 높아 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} 오히려 올라갑니다. 본전까지 필요한 상승률도 ${bePct(need0)}에서 <b>${bePct(need1)}</b>로 커집니다.`
+        : `현재가 ${beMoney(P)}에서 <b>${beMoney(be0, UP)}</b>까지 올라야 본전입니다.${modeMsg ? '' : ' 아래 추가 매수 칸을 채우면 물타기 후와 비교해 드립니다.'}`}</div>`;
+  }
+
+  // ── 지금 그대로 / 물타기 후 카드 ──
+  const card = (title, Q, A, inv, bep, need, pl, after) => `
+    <div class="be-card${after ? ' after' : ''}">
+      <div class="be-card-title">${title}${after ? `<span class="be-chip">+${fmtQtyPlain(q)}주</span>` : ''}</div>
+      <div class="be-row"><span>평균 단가</span><b>${beMoney(A)}</b></div>
+      <div class="be-row"><span>보유 수량</span><b>${beQty(Q)}</b></div>
+      <div class="be-row"><span>들어간 돈${costOn ? ' (수수료 포함)' : ''}</span><b>${beMoney(inv)}</b></div>
+      <div class="be-row"><span>지금 팔면 손익${costOn ? ' (비용 차감)' : ''}</span><b class="${beCls(pl)}">${beMoney(pl, { sign: true })} (${bePct(pl / inv)})</b></div>
+      <div class="be-row"><span>본전 가격</span><b>${beMoney(bep, UP)}</b></div>
+      <div class="be-row key"><span>본전까지</span><b class="${need > 0 ? 'be-pos' : ''}">${need > 0 ? bePct(need) : '이미 본전 위'}</b></div>
+    </div>`;
+  const cards = `<div class="be-cards">
+      ${card('지금 그대로', Q0, A0, inv0, be0, need0, pl0, false)}
+      ${has ? card(afterLabel, Q1, A1, inv1, be1, need1, pl1, true)
+            : `<div class="be-card" style="display:flex;align-items:center;justify-content:center;text-align:center;color:var(--ink-mute);font-size:14px;line-height:1.6;">
+                 ${modeMsg || '추가 매수 수량(또는 금액·목표 평단)을 넣으면<br>물타기 후 숫자가 여기에 나옵니다.'}</div>`}
+    </div>`;
+
+  // ── 같은 하락에 손실이 얼마나 커지는지 (물타기의 대가) ──
+  let warn = '';
+  if (has && !isPyramid) {
+    const d = 0.10, Pd = P * (1 - d);
+    const l0 = Pd * Q0 * sellKeep - inv0, l1 = Pd * Q1 * sellKeep - inv1;
+    const extra = has && be.mode === 'target' ? `목표 평단 ${beMoney(beNum('be-target'))}${beJ('을','를')} 만들려면 <b>${beQty(q)}</b>(약 ${beMoney(q * B * (1 + f))})가 필요합니다. ` : '';
+    warn = `<div class="be-warn">${extra}평단이 내려간 만큼 비중도 커졌습니다. 여기서 <b>10% 더 떨어지면</b> 손실은
+      지금 그대로일 때 <b class="be-neg">${beMoney(l0, { sign: true })}</b>, 물타기 후에는 <b class="be-neg">${beMoney(l1, { sign: true })}</b>입니다.
+      본전이 가까워지는 대신 같은 하락에 잃는 금액도 커진다는 점을 함께 보세요.</div>`;
+  } else if (modeMsg && has === false && be.mode !== 'qty') {
+    warn = '';
+  }
+
+  // ── 목표 수익률별 필요 주가 ──
+  const targets = [...BE_TARGETS, 'custom'];
+  const cell = (inv, Q, r) => {
+    const px = inv * (1 + r) / (Q * sellKeep);
+    const up = px / P - 1;
+    return `<b>${beMoney(px, UP)}</b>
+      <small class="${up > 0 ? 'be-pos' : ''}">${up > 0 ? '<span class="be-lbl">현재가 대비 </span>' + bePct(up) : '이미 도달'}</small>
+      <small style="color:var(--ink-mute);font-weight:600;">${r > 0 ? '수익 ' + beMoney(inv * r, { sign: true }) : '손익 0'}</small>`;
+  };
+  const rows = targets.map(tg => {
+    const r = (tg === 'custom' ? be.custom : tg) / 100;
+    const label = tg === 'custom'
+      ? `<span class="be-custom">+<input id="be-custom" inputmode="decimal" value="${be.custom}">%</span>`
+      : (tg === 0 ? '본전' : `+${tg}%`);
+    return `<tr class="${tg === 0 ? 'hl' : ''}"><td class="be-t-label">${label}</td>
+      <td>${cell(inv0, Q0, r)}</td>${has ? `<td>${cell(inv1, Q1, r)}</td>` : ''}</tr>`;
+  }).join('');
+  const table = `
+    <div class="be-sub" style="margin-top:22px;">얼마까지 올라야 이만큼 벌까? <small>%는 현재가 ${beMoney(P)}에서 필요한 상승률${costOn ? ' · 비용을 넣은 목표가는 그 가격 이상에 팔아야 하는 값(올림)' : ''}</small></div>
+    <div style="overflow-x:auto;"><table class="be-table">
+      <thead><tr><th>목표 수익률</th><th>지금 그대로</th>${has ? `<th>${afterLabel}</th>` : ''}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="be-note">수익률은 들어간 돈${costOn ? '(매수 수수료 포함)' : ''} 대비, 팔고 손에 남는 금액${costOn ? '(매도 수수료·거래세 차감)' : ''} 기준입니다.
+      ${costOn ? '' : '수수료·거래세를 넣으려면 위의 체크 상자를 켜세요. '}매매차익·분배금에 붙는 세금은 빼기 전 금액입니다.</div>`;
+
+  out.innerHTML = `<div class="be-hero">${hero}</div>${cards}${warn}${table}`;
+
+  const ci = beEl('be-custom');
+  if (ci) {
+    ci.addEventListener('change', () => {
+      const v = Number(String(ci.value).replace(/,/g, ''));
+      if (Number.isFinite(v) && v >= 0 && v <= 10000) be.custom = v;
+      beCalc();
+    });
+  }
+}
+
+function renderBeRecover(lossPct) {
+  const box = beEl('be-recover');
+  if (!box) return;
+  let hi = null;
+  if (lossPct != null && lossPct > 0) {
+    hi = BE_LOSSES.reduce((a, b) => Math.abs(b - lossPct) < Math.abs(a - lossPct) ? b : a, BE_LOSSES[0]);
+  }
+  box.innerHTML = BE_LOSSES.map(l => {
+    const need = l / (100 - l) * 100;
+    const txt = need >= 100 ? Math.round(need) + '%' : need.toFixed(1) + '%';
+    return `<div class="be-rc${l === hi ? ' hl' : ''}"><div class="l">−${l}%</div><div class="r">+${txt}</div></div>`;
+  }).join('');
+}
+
+function initBreakeven() {
+  if (!beEl('be-card')) return;
+  beLoad();
+  beSetCur(be.cur);
+  beSetMode(be.mode);
+  beEl('be-cost').classList.toggle('on', beEl('be-cost-on').checked);
+  renderBreakevenTickers();
+
+  document.querySelectorAll('#be-cur button').forEach(b => b.addEventListener('click', () => { beSetCur(b.dataset.cur); beCalc(); }));
+  document.querySelectorAll('#be-mode button').forEach(b => b.addEventListener('click', () => { beSetMode(b.dataset.mode); beCalc(); }));
+  beEl('be-ticker').addEventListener('change', e => { if (e.target.value) beLoadTicker(e.target.value); });
+  beEl('be-cost-on').addEventListener('change', e => { beEl('be-cost').classList.toggle('on', e.target.checked); beCalc(); });
+  beEl('be-tax').addEventListener('change', beCalc);
+  document.querySelectorAll('#be-card .be-in').forEach(inp => {
+    inp.addEventListener('input', () => {
+      // 숫자·쉼표·소수점만 남긴다
+      const clean = inp.value.replace(/[^0-9.,]/g, '');
+      if (clean !== inp.value) inp.value = clean;
+      beCalc();
+    });
+    inp.addEventListener('blur', () => { if (inp.id !== 'be-fee') beFormatInput(inp); });
+  });
+  beCalc();
+}
+
+initBreakeven();
 </script>
 </body>
 </html>
