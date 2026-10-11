@@ -153,6 +153,15 @@ jobs:
           [ -d assets ] && cp -r assets _site/ || true
           echo "배포 크기: $(du -sh _site | cut -f1)"
 
+      # 우수회원 전용: 배포본 데이터만 입장 코드로 암호화한다 (캐시는 평문 유지).
+      # MEMBER_CODE 시크릿이 없으면 여기서 멈춰, 평문 데이터가 배포되지 않게 한다.
+      - name: 데이터 암호화 (우수회원 입장 코드)
+        env:
+          MEMBER_CODE: ${{ secrets.MEMBER_CODE }}
+        run: |
+          pip install --quiet cryptography
+          python scripts/encrypt_site.py _site/data
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
