@@ -3,8 +3,8 @@
 - 키: PBKDF2-SHA256(정규화한 코드, "ttokjae-member-key-v1", 200000회) → AES-256-GCM
 - 형식: {"__enc":1,"z":1,"iv":base64,"ct":base64}  (z=1: 암호화 전에 zlib 압축)
 - 브라우저 쪽 복호화는 https://ttokjaetv.github.io/member-gate.js 의 MemberGate.decrypt
-- 코드는 레포 Secrets 의 MEMBER_CODE 에서 받는다. 없으면 실패한다 —
-  암호화 안 된 데이터가 새 화면과 함께 배포되는 일을 막기 위해서다.
+- 코드는 레포 Secrets 의 MEMBER_CODE 에서 받는다. 없으면 암호화를 건너뛰고
+  평문 그대로 배포한다(경고만 남김). 화면 쪽은 평문·암호문을 모두 읽는다.
 - 캐시(data/)는 평문 그대로 두고 배포본(_site/data)만 암호화한다.
 """
 import base64
@@ -31,8 +31,9 @@ def main() -> int:
     raw = os.environ.get("MEMBER_CODE", "")
     code = norm(raw)
     if not code:
-        print("::error::MEMBER_CODE 시크릿이 없습니다. Settings → Secrets and variables → Actions 에 등록하세요.")
-        return 1
+        print("::warning::MEMBER_CODE 시크릿이 없어 데이터 암호화를 건너뜁니다(평문 배포). "
+              "암호화하려면 Settings → Secrets and variables → Actions 에 MEMBER_CODE 를 등록하세요.")
+        return 0
     root = Path(sys.argv[1] if len(sys.argv) > 1 else "_site/data")
     key = hashlib.pbkdf2_hmac("sha256", code.encode(), KEY_SALT, ITER)
     aes = AESGCM(key)
