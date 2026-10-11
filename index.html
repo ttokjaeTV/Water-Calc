@@ -3,9 +3,6 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="robots" content="noindex, nofollow" />
-<!-- 우수회원 입장 게이트: 코드 확인 + 데이터 복호화 (허브 레포 member-gate.js) -->
-<script src="https://ttokjaetv.github.io/member-gate.js"></script>
 <title>똑재 하락장 물타기 계산기</title>
 <!-- Pretendard 가변폰트 + 동적 서브셋.
      static 버전은 weight 하나당 한글 전체가 담긴 770KB 파일을 통째로 받는다.
@@ -2246,10 +2243,7 @@ async function fetchText(url, timeoutMs = 20000) {
   try {
     const res = await fetch(url, { signal: ctl.signal, cache: 'no-cache' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    // 우수회원 전용: 배포본 데이터는 입장 코드로 암호화돼 있다. 코드 입력 전에는 여기서 기다린다.
-    if (window.MemberGate && MemberGate.isEncrypted(text)) return await MemberGate.decrypt(text);
-    return text;
+    return await res.text();
   } finally { clearTimeout(tid); }
 }
 
