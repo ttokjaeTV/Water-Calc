@@ -1168,7 +1168,11 @@ body {
 .hub-back:hover { color: var(--accent); }
 .monthly-base { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 14px; padding: 12px 16px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; color: var(--text-dim); }
 .monthly-base label { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text); }
-.monthly-base input { width: 110px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-variant-numeric: tabular-nums; text-align: right; background: var(--white); color: var(--text); }
+.monthly-base input { width: 110px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-variant-numeric: tabular-nums; text-align: left; background: var(--white); color: var(--text); }
+/* 숫자 바로 뒤에 붙는 단위 (만원) — 위치는 JS(placeUnits)가 글자 폭을 재서 맞춘다 */
+.unit-wrap { display: block; position: relative; }
+.input-unit { position: absolute; top: 50%; transform: translateY(-50%); left: 0; pointer-events: none;
+  font-size: 14px; font-weight: 700; color: var(--text-mute); white-space: nowrap; visibility: hidden; }
 .monthly-base .mb-note { flex: 1 1 220px; font-size: 13px; color: var(--text-mute); line-height: 1.5; }
 </style>
 </head>
@@ -1450,7 +1454,7 @@ body {
 
 <div class="monthly-base">
   <label for="monthly-base">평소 월 적립액 (만원)
-    <input type="number" id="monthly-base" min="0" step="1" inputmode="numeric" placeholder="선택" oninput="onMonthlyBase(this.value)">
+    <span class="unit-wrap"><input type="number" id="monthly-base" data-unit="만원" min="0" step="1" inputmode="numeric" placeholder="선택" oninput="onMonthlyBase(this.value)"></span>
   </label>
   <span class="mb-note"><b>월정액</b> = 평소 매달 넣는 적립 금액입니다. 넣어 두면 "월정액 × 1.5배" 같은 신호를 금액으로도 보여드립니다. 비워 둬도 됩니다.</span>
 </div>
@@ -4886,9 +4890,35 @@ function onMonthlyBase(v) {
   renderGuide();
 }
 
+// ============== 입력칸 숫자 뒤 단위 ==============
+// input에 data-unit이 있으면 입력한 숫자 바로 뒤에 단위(만원)를 붙여 보여 준다.
+// 이 입력칸은 고정폭 숫자(tabular-nums)라 canvas 대신 같은 글꼴의 숨은 span으로 폭을 잰다.
+let unitMeasure = null;
+function placeUnits() {
+  if (!unitMeasure) { unitMeasure = document.createElement('span'); unitMeasure.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;white-space:pre;'; document.body.appendChild(unitMeasure); }
+  document.querySelectorAll('.unit-wrap input[data-unit]').forEach(inp => {
+    let tag = inp.parentNode.querySelector('.input-unit');
+    if (!tag) { tag = document.createElement('span'); tag.className = 'input-unit'; tag.textContent = inp.dataset.unit; inp.after(tag); }
+    const cs = getComputedStyle(inp);
+    // 값이 비었거나, 숨어 있거나, 숫자가 이미 칸을 넘쳐 잘려 보이면 단위를 감춘다
+    if (inp.value === '' || !inp.offsetWidth || inp.scrollWidth > inp.clientWidth + 1) { tag.style.visibility = 'hidden'; return; }
+    ['fontFamily', 'fontSize', 'fontWeight', 'fontVariantNumeric', 'letterSpacing'].forEach(k => { unitMeasure.style[k] = cs[k]; });
+    unitMeasure.textContent = inp.value;
+    const w = unitMeasure.getBoundingClientRect().width;
+    const left = parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth) + w + 4 - inp.scrollLeft;
+    tag.style.left = Math.round(left) + 'px';
+    tag.style.fontSize = cs.fontSize;
+    // 마우스 화면의 숫자칸은 오른쪽 안쪽에 위·아래 화살표(약 16px)가 뜬다 → 그 자리까지 오면 감춘다
+    const spin = inp.type === 'number' && matchMedia('(hover: hover) and (pointer: fine)').matches ? 16 : 0;
+    const limit = inp.clientWidth - parseFloat(cs.paddingRight) + (spin ? -spin : 8);
+    tag.style.visibility = left + tag.offsetWidth < limit ? 'visible' : 'hidden';
+  });
+}
+
 function renderGuide() {
   const mbInput = document.getElementById('monthly-base');
   if (mbInput && document.activeElement !== mbInput) mbInput.value = state.monthlyBase > 0 ? state.monthlyBase : '';
+  placeUnits();
   document.getElementById('guide-grid').innerHTML = TIERS.map(t => {
     let action;
     if (t.multiplier > 0) action = `월정액의 <b style="color:${t.color};">${t.multiplier}배</b> 매수` + (state.monthlyBase > 0 ? ` <span style="white-space:nowrap;">(약 ${fmtManwon(state.monthlyBase * t.multiplier)})</span>` : '');
@@ -5204,6 +5234,8 @@ setupDragDrop();
 // Initial render
 renderGuide();
 renderGroups();
+{ let ut; window.addEventListener('resize', () => { clearTimeout(ut); ut = setTimeout(placeUnits, 200); }); }
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeUnits);   // 웹폰트가 늦게 뜨면 폭을 다시 잰다
 
 // FORCE render macro interpretations on load (fixes rare timing issues)
 (function forceInitialMacroRender() {
