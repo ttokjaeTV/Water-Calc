@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>똑재 하락장 물타기 계산기</title>
+<title>하락장 물타기 계산기 · 똑재TV</title>
 <!-- Pretendard 가변폰트 + 동적 서브셋.
      static 버전은 weight 하나당 한글 전체가 담긴 770KB 파일을 통째로 받는다.
      이 페이지는 500·600·700·800을 모두 쓰므로 그대로 두면 3MB가 넘는다.
@@ -48,6 +48,7 @@
   --gold: #B8813F;
   --red: #B23A1E;  --red-soft: rgba(178, 58, 30, 0.10);
   --green: #3F6B4A; --green-soft: rgba(63, 107, 74, 0.12);
+  --down: #2E5E8A; --down-soft: rgba(46, 94, 138, 0.12);   /* 하락·손실 = 파랑 (국내 증권사 관례, 포트폴리오 도구와 동일) */
   --orange: var(--accent);
   --blue: #4A6B8A; --purple: #7A6A8A;
   --us-color: #4A6B8A;
@@ -320,7 +321,7 @@ body {
 }
 .mx-sub { font-size: 12px; font-weight: 700; margin-top: 1px; }
 .mx-up   { color: #A03D1F; }
-.mx-down { color: #3F6B4A; }
+.mx-down { color: var(--down); }
 .mx-flat { color: var(--ink-mute); }
 .mx-note { font-size: 11.5px; color: var(--ink-mute); margin-top: 2px; font-weight: 600; }
 .mx-foot { font-size: 13px; color: var(--ink-mute); margin-top: 6px; line-height: 1.6; }
@@ -724,7 +725,7 @@ body {
 }
 
 .diff-up { color: var(--red); }
-.diff-down { color: var(--green); }
+.diff-down { color: var(--down); }
 .diff-neutral { color: var(--text-mute); }
 
 .note-input {
@@ -892,7 +893,7 @@ body {
   font-size: 12px; font-family: var(--font-sans); font-variant-numeric: tabular-nums; margin-left: 4px;
 }
 .pct-up { background: var(--red-soft); color: var(--red); }
-.pct-down { background: var(--green-soft); color: var(--green); }
+.pct-down { background: var(--down-soft); color: var(--down); }
 .score-pill {
   display: inline-block; padding: 4px 10px; border-radius: 6px;
   font-family: var(--font-sans); font-variant-numeric: tabular-nums; font-weight: 800;
@@ -1133,7 +1134,7 @@ body {
 .be-row b { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
 .be-row.key b { font-size: 16px; }
 .be-pos { color: var(--red); }   /* 상승·수익 */
-.be-neg { color: var(--green); } /* 하락·손실 — 사이트 기존 배지(pct-down)와 같은 색 */
+.be-neg { color: var(--down); } /* 하락·손실 — 사이트 기존 배지(pct-down)와 같은 색 */
 .be-warn { margin-top: 12px; background: rgba(160,61,31,.07); border: 1px solid rgba(160,61,31,.35); border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.7; color: var(--ink-soft); }
 .be-warn b { color: var(--ink); font-weight: 800; }
 .be-table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 14px; }
@@ -1148,7 +1149,7 @@ body {
 .be-custom input { width: 64px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--white); font-family: inherit; font-weight: 800; font-size: 14px; text-align: right; }
 .be-recover-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 10px; }
 .be-rc { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px 6px; text-align: center; }
-.be-rc .l { font-size: 13px; font-weight: 700; color: var(--green); }
+.be-rc .l { font-size: 13px; font-weight: 700; color: var(--down); }
 .be-rc .r { font-size: 16px; font-weight: 800; color: var(--red); font-variant-numeric: tabular-nums; }
 .be-rc.hl { border-color: var(--accent); background: var(--accent-soft); }
 @media (max-width: 768px) {
@@ -1163,10 +1164,18 @@ body {
   .be-table { font-size: 13.5px; }
   .be-table th, .be-table td { padding: 8px 5px; }
 }
+.hub-back { display: inline-block; margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--ink-mute); text-decoration: none; }
+.hub-back:hover { color: var(--accent); }
+.monthly-base { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 14px; padding: 12px 16px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; color: var(--text-dim); }
+.monthly-base label { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text); }
+.monthly-base input { width: 110px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-variant-numeric: tabular-nums; text-align: right; background: var(--white); color: var(--text); }
+.monthly-base .mb-note { flex: 1 1 220px; font-size: 13px; color: var(--text-mute); line-height: 1.5; }
 </style>
 </head>
 <body>
 <div class="container">
+
+<a href="https://ttokjaetv.github.io/" class="hub-back">← 똑재TV 계산기 모음</a>
 
 <div class="header">
   <div class="brand">
@@ -1308,12 +1317,12 @@ body {
 
       <div class="explain-item">
         <div class="explain-h">CNN 공포탐욕지수 <span class="explain-src">CNN</span></div>
-        <p>미국 시장 참여자의 심리를 <b>0(극한 공포) ~ 100(극한 탐욕)</b>으로 나타냅니다.
+        <p>미국 시장 참여자의 심리를 <b>0(극단적 공포) ~ 100(극단적 탐욕)</b>으로 나타냅니다.
         주가 모멘텀, 신고가·신저가 비율, 풋/콜 비율, 하이일드 스프레드 등
         일곱 가지를 합쳐 산출합니다.</p>
         <p class="explain-scale">
-          <span>0~24 극한공포</span><span>25~44 공포</span><span>45~55 중립</span>
-          <span>56~75 탐욕</span><span>76~100 극한탐욕</span>
+          <span>0~24 극단적 공포</span><span>25~44 공포</span><span>45~55 중립</span>
+          <span>56~75 탐욕</span><span>76~100 극단적 탐욕</span>
         </p>
         <p class="explain-note">VIX와 방향이 반대입니다. <b>낮을수록 매수 점수가 올라갑니다.</b>
         남들이 겁먹었을 때 사자는 게 이 도구의 전제입니다.</p>
@@ -1427,7 +1436,7 @@ body {
   <div class="import-row">
     <div class="import-text">
       <b>포트폴리오 관리시트</b>에서 저장한 파일이 있으면 보유 종목을 한 번에 불러옵니다.
-      계좌별로 흩어진 같은 종목은 합산되고, 보유 수량과 평단가도 함께 들어옵니다.
+      계좌별로 흩어진 같은 종목은 합산되고, 보유 수량과 평균 단가(평단)도 함께 들어옵니다.
     </div>
     <button class="btn-ghost btn" id="import-portfolio-btn">파일 불러오기</button>
     <input type="file" id="import-portfolio-file" accept=".json,application/json" style="display:none;">
@@ -1437,6 +1446,13 @@ body {
 <div class="step-label">
   <div class="step-line"></div>
   <span class="step-text"><span class="step-en">STEP 03</span> / 그룹별 판정</span>
+</div>
+
+<div class="monthly-base">
+  <label for="monthly-base">평소 월 적립액 (만원)
+    <input type="number" id="monthly-base" min="0" step="1" inputmode="numeric" placeholder="선택" oninput="onMonthlyBase(this.value)">
+  </label>
+  <span class="mb-note"><b>월정액</b> = 평소 매달 넣는 적립 금액입니다. 넣어 두면 "월정액 × 1.5배" 같은 신호를 금액으로도 보여드립니다. 비워 둬도 됩니다.</span>
 </div>
 
 <!-- GROUP: US -->
@@ -1479,7 +1495,7 @@ body {
   <div class="group-header">
     <div class="group-title">
       <span class="group-badge">🌏 INTL</span>
-      <span>한국상장 해외ETF</span>
+      <span>국내상장 해외 ETF</span>
     </div>
     <div class="group-indicator">적용 지수: <strong>VIX + CNN F&G</strong> (기초자산이 해외)</div>
   </div>
@@ -1504,7 +1520,7 @@ body {
   </div>
   <div class="empty-state" id="empty-intl">
     <div class="icon">🌏</div>
-    <div>한국상장 해외ETF가 없어요</div>
+    <div>국내상장 해외 ETF가 없어요</div>
     <div class="hint">TIGER 미국S&P500(360750), KODEX 미국배당커버드콜(441640) 등</div>
   </div>
 </div>
@@ -1514,7 +1530,7 @@ body {
   <div class="group-header">
     <div class="group-title">
       <span class="group-badge">🇰🇷 KOR</span>
-      <span>한국 주식/ETF</span>
+      <span>국내상장 주식/ETF</span>
     </div>
     <div class="group-indicator">적용 지수: <strong>VKOSPI + 똑재 공포탐욕지수</strong></div>
   </div>
@@ -1539,7 +1555,7 @@ body {
   </div>
   <div class="empty-state" id="empty-kr">
     <div class="icon">🇰🇷</div>
-    <div>한국 종목이 없어요</div>
+    <div>국내상장 주식/ETF가 없어요</div>
     <div class="hint">삼성전자(005930), KODEX 200(069500) 등</div>
   </div>
 </div>
@@ -1721,10 +1737,11 @@ body {
   <div class="card-subtitle">종합점수 = (VIX × <span id="guide-w-vix">20</span>% + F&amp;G × <span id="guide-w-fg">30</span>% + 종목 보조지표 × <span id="guide-w-rsi">50</span>%) / 100 <span style="color:var(--text-mute);">— 앞 둘이 <b>시장</b>, 마지막이 <b>종목</b> 층입니다</span></div>
   <button class="btn-ghost btn" onclick="showScoreMethod()" style="padding:7px 14px;font-size: 14px;margin:2px 0 14px;">점수는 이렇게 계산됩니다 — 지표별 반영 비중 보기</button>
   <div class="guide-grid" id="guide-grid"></div>
+  <div style="font-size: 13px;color:var(--text-mute);margin-top:8px;">월정액 = 평소 매달 넣는 적립 금액입니다. STEP 03에서 평소 월 적립액을 넣으면 금액으로 함께 보여드립니다.</div>
   
   <!-- 역사적 참고 사례 -->
   <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
-    <div style="font-size: 15px;font-weight:600;margin-bottom:12px;color:var(--mint);">역사적 사례로 보는 종합점수 (기본 가중치 기준)</div>
+    <div style="font-size: 15px;font-weight:600;margin-bottom:12px;color:var(--mint);">역사적 사례로 보는 종합점수 (기본 가중치 · RSI로 대신 계산)</div>
     <div style="overflow-x:auto;">
       <table class="ticker-table" style="min-width:auto;">
         <thead>
@@ -1732,7 +1749,7 @@ body {
             <th>상황</th>
             <th class="num">VIX</th>
             <th class="num">F&G</th>
-            <th class="num">보조지표 5축</th>
+            <th class="num">RSI(14)</th>
             <th class="num">점수</th>
             <th>신호</th>
           </tr>
@@ -1744,7 +1761,7 @@ body {
             <td class="num mono">12</td>
             <td class="num mono">20</td>
             <td class="num"><span class="score-pill" style="background:rgba(47,90,58,0.16);color:#2F5A3A;">96</span></td>
-            <td><span style="color:#2F5A3A">극한공포 매수</span></td>
+            <td><span style="color:#2F5A3A">극단적 공포 매수</span></td>
           </tr>
           <tr>
             <td>2020 코로나 쇼크</td>
@@ -1752,14 +1769,14 @@ body {
             <td class="num mono">5</td>
             <td class="num mono">15</td>
             <td class="num"><span class="score-pill" style="background:rgba(47,90,58,0.16);color:#2F5A3A;">99</span></td>
-            <td><span style="color:#2F5A3A">극한공포 매수</span></td>
+            <td><span style="color:#2F5A3A">극단적 공포 매수</span></td>
           </tr>
           <tr>
             <td>2022 금리인상</td>
             <td class="num mono">32</td>
             <td class="num mono">22</td>
             <td class="num mono">28</td>
-            <td class="num"><span class="score-pill" style="background:rgba(78,122,85,0.11);color:#4E7A55;">76</span></td>
+            <td class="num"><span class="score-pill" style="background:rgba(78,122,85,0.11);color:#4E7A55;">75</span></td>
             <td><span style="color:#4E7A55">매수</span></td>
           </tr>
           <tr>
@@ -1767,7 +1784,7 @@ body {
             <td class="num mono">17</td>
             <td class="num mono">55</td>
             <td class="num mono">55</td>
-            <td class="num"><span class="score-pill" style="background:rgba(196,165,123,0.20);color:#8A6D3B;">47</span></td>
+            <td class="num"><span class="score-pill" style="background:rgba(196,165,123,0.20);color:#8A6D3B;">40</span></td>
             <td><span style="color:#8A6D3B">중립 관망</span></td>
           </tr>
           <tr>
@@ -1775,7 +1792,7 @@ body {
             <td class="num mono">13</td>
             <td class="num mono">75</td>
             <td class="num mono">72</td>
-            <td class="num"><span class="score-pill" style="background:rgba(217,84,43,0.11);color:#D9542B;">26</span></td>
+            <td class="num"><span class="score-pill" style="background:rgba(217,84,43,0.11);color:#D9542B;">20</span></td>
             <td><span style="color:#D9542B">소량익절</span></td>
           </tr>
           <tr>
@@ -1783,14 +1800,15 @@ body {
             <td class="num mono">11</td>
             <td class="num mono">82</td>
             <td class="num mono">78</td>
-            <td class="num"><span class="score-pill" style="background:rgba(191,70,32,0.15);color:#BF4620;">15</span></td>
+            <td class="num"><span class="score-pill" style="background:rgba(191,70,32,0.15);color:#BF4620;">12</span></td>
             <td><span style="color:#BF4620">강력익절</span></td>
           </tr>
         </tbody>
       </table>
     </div>
     <div style="font-size: 13px;color:var(--text-mute);margin-top:8px;">
-      과거 사례와 비슷한 점수가 나오면 해당 구간의 전략을 참고하세요. 연속 함수 기반이라 동일 점수 ≒ 동일 시장 상태.
+      VIX·F&G·RSI(14)는 당시 상황을 보여 주는 어림값입니다. 지금 화면의 종목점수(보조지표 5축)는 과거 값을 구할 수 없어,
+      보조지표가 없을 때 쓰는 RSI 환산 점수로 대신 계산했습니다. 그래서 실제 종목의 5축 점수와는 다를 수 있으니 구간 감을 잡는 참고로만 보세요.
     </div>
   </div>
 </div>
@@ -1873,7 +1891,7 @@ body {
         <label class="be-field">
           <span>팔 때 거래세</span>
           <select class="be-select" id="be-tax" style="flex:none;">
-            <option value="0">0% — 국내 상장 ETF · 미국 주식</option>
+            <option value="0">0% — 국내상장 ETF · 미국 주식</option>
             <option value="0.20">0.20% — 코스피 · 코스닥 주식 (2026년)</option>
             <option value="0.10">0.10% — 코넥스 주식 (2026년)</option>
           </select>
@@ -1881,7 +1899,7 @@ body {
       </div>
       <div class="be-note">
         거래세율은 2026년 1월 1일 이후 매도분 기준입니다(코스피 0.20%는 농어촌특별세 0.15% 포함).
-        매매차익에 붙는 세금(해외주식 양도소득세, 국내 상장 해외 ETF 배당소득세)은 <b>이익이 났을 때만</b> 붙기 때문에 본전 가격에는 영향이 없고,
+        매매차익에 붙는 세금(해외주식 양도소득세, 국내상장 해외 ETF 배당소득세)은 <b>이익이 났을 때만</b> 붙기 때문에 본전 가격에는 영향이 없고,
         아래 목표 수익 행은 이 세금을 빼기 전 기준입니다. 해외주식 환전 비용은 넣지 않았습니다.
       </div>
     </div>
@@ -1970,8 +1988,8 @@ body {
         <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round"/>
         <line id="gauge-needle" x1="100" y1="100" x2="100" y2="30" stroke="#3A2F26" stroke-width="3" stroke-linecap="round" transform="rotate(-90 100 100)" style="transition: transform 0.6s cubic-bezier(.4,1.5,.5,1);"/>
         <circle cx="100" cy="100" r="6" fill="#3A2F26"/>
-        <text x="20" y="118" font-size="10" fill="#8B8276" font-weight="700">0 공포</text>
-        <text x="160" y="118" font-size="10" fill="#8B8276" font-weight="700">탐욕 100</text>
+        <text x="4" y="118" font-size="10" fill="#8B8276" font-weight="700">0 극단적 공포</text>
+        <text x="196" y="118" font-size="10" fill="#8B8276" font-weight="700" text-anchor="end">극단적 탐욕 100</text>
       </svg>
       <div class="fg-gauge-info">
         <div class="fg-gauge-value" id="ddokjae-value">--</div>
@@ -2071,9 +2089,9 @@ body {
 </div>
 
 <div class="footer">
-  <div style="margin-bottom:10px;"><b>똑재</b> · 평생 월 300만원 현금흐름 만드는 포트폴리오 완성반</div>
   <div class="disclaimer">
-    ※ 본 시뮬레이터는 세금·수수료를 제외한 단순 계산 도구입니다. 특정 종목의 매수·매도를 권유하지 않으며,
+    ※ 매수·익절 신호와 평단은 세금·수수료를 넣지 않은 값입니다. 매매 수수료·거래세는 STEP 06에서 켰을 때만 '들어간 돈'·'본전 가격'·목표가에 반영하며, 매매차익 세금과 환전 비용은 넣지 않았습니다.<br>
+    특정 종목의 매수·매도를 권유하지 않으며,
     실제 투자 결과와 다를 수 있고 투자 판단의 책임은 본인에게 있습니다.<br>
     보조지표는 전일 종가 기준으로 하루 한 번 계산되며, 현재가는 Yahoo Finance·네이버증권 기준으로
     15~20분 지연될 수 있습니다.
@@ -2097,6 +2115,7 @@ const DEFAULT_STATE = {
   'fg-momentum': null, 'fg-vkospi': null, 'fg-rsi': null,
   'fg-foreign': null, 'fg-highlow': null,
   weightVix: 20, weightFg: 30, weightRsi: 50,  // 사용자 가중치 (기본값)
+  monthlyBase: 0,  // 평소 월 적립액(만원) — 선택. 0이면 배수만 보여 준다
 };
 
 let state = { ...DEFAULT_STATE };
@@ -2855,7 +2874,7 @@ function renderMacroExtra() {
   if (m.foreignNetBuy && m.foreignNetBuy.value != null) {
     const v = m.foreignNetBuy.value;
     extra.push(tile('외국인 순매수', MX_FMT.foreignNetBuy(v),
-      `<div class="mx-sub ${v >= 0 ? 'mx-down' : 'mx-up'}">${v >= 0 ? '순매수' : '순매도'}</div>`,
+      `<div class="mx-sub ${v >= 0 ? 'mx-up' : 'mx-down'}">${v >= 0 ? '순매수' : '순매도'}</div>`,
       '5영업일 · 코스피+코스닥', 'foreignNetBuy'));
   }
   if (m.highLowRatio && m.highLowRatio.value != null) {
@@ -2867,7 +2886,7 @@ function renderMacroExtra() {
   if (m.creditSpread && m.creditSpread.ratio != null) {
     const c = m.creditSpread;
     extra.push(tile('신용 스프레드', MX_FMT.creditSpread(c.ratio),
-      `<div class="mx-sub ${c.vs60d >= 0 ? 'mx-down' : 'mx-up'}">60일 평균 대비 ${c.vs60d > 0 ? '+' : ''}${c.vs60d}%</div>`,
+      `<div class="mx-sub ${c.vs60d >= 0 ? 'mx-up' : 'mx-down'}">60일 평균 대비 ${c.vs60d > 0 ? '+' : ''}${c.vs60d}%</div>`,
       'HYG/LQD 상대강도', 'creditSpread'));
   }
   if (extra.length) {
@@ -3044,7 +3063,7 @@ function fmtQty(q) {
 // 평단가가 있으면 현재가 대비 손익률 배지. 포트폴리오 파일에서 들어온다.
 function plBadge(t) {
   if (!t.avgPrice && t.avgMissing) return `<span class="pct-badge" style="color:var(--ink-mute);"
-    title="포트폴리오 파일에 평단가가 비어 있습니다">평단 미입력</span>`;
+    title="포트폴리오 파일에 평균 단가가 비어 있습니다">평단 미입력</span>`;
   if (!t.avgPrice || t.price == null) return '';
   const pct = (t.price - t.avgPrice) / t.avgPrice * 100;
   const up = pct >= 0;
@@ -3061,8 +3080,8 @@ function plBadge(t) {
 
 const HIST_META = {
   'vix':      { label: 'VIX · 미국 변동성',  color: '#D9542B', lo: 0,  hi: 60,  bands: [[0,15,'매우 안정'],[15,20,'보통'],[20,30,'경계'],[30,60,'변동성 확대']] },
-  'cnn-fg':   { label: 'CNN 공포탐욕지수',   color: '#8B6F47', lo: 0,  hi: 100, bands: [[0,25,'극한 공포'],[25,45,'공포'],[45,55,'중립'],[55,75,'탐욕'],[75,100,'극한 탐욕']] },
-  'kospi-fg': { label: '똑재 공포탐욕지수',  color: '#3F6B4A', lo: 0,  hi: 100, bands: [[0,25,'극한 공포'],[25,45,'공포'],[45,55,'중립'],[55,75,'탐욕'],[75,100,'극한 탐욕']] },
+  'cnn-fg':   { label: 'CNN 공포탐욕지수',   color: '#8B6F47', lo: 0,  hi: 100, bands: [[0,25,'극단적 공포'],[25,45,'공포'],[45,55,'중립'],[55,75,'탐욕'],[75,100,'극단적 탐욕']] },
+  'kospi-fg': { label: '똑재 공포탐욕지수',  color: '#3F6B4A', lo: 0,  hi: 100, bands: [[0,25,'극단적 공포'],[25,45,'공포'],[45,55,'중립'],[55,75,'탐욕'],[75,100,'극단적 탐욕']] },
   'vkospi':   { label: 'VKOSPI · 코스피200 변동성', color: '#B8813F', lo: 0, hi: 60, bands: [] },
 };
 
@@ -3673,7 +3692,7 @@ function setupWeightSliders() {
 
 // 크림베이지 팔레트에 맞춘 warm 스펙트럼: 짙은 그린(공포·매수) → 베이지골드(중립) → 오렌지(탐욕·익절)
 const TIERS = [
-  { min: 90, max: 100, emoji: '', label: '극한공포 매수', color: '#2F5A3A', bg: 'rgba(47, 90, 58, 0.16)',   multiplier: 2.0 },
+  { min: 90, max: 100, emoji: '', label: '극단적 공포 매수', color: '#2F5A3A', bg: 'rgba(47, 90, 58, 0.16)',   multiplier: 2.0 },
   { min: 80, max: 89,  emoji: '', label: '강력매수',      color: '#3F6B4A', bg: 'rgba(63, 107, 74, 0.14)',  multiplier: 1.5 },
   { min: 70, max: 79,  emoji: '', label: '매수',          color: '#4E7A55', bg: 'rgba(78, 122, 85, 0.11)',  multiplier: 1.2 },
   { min: 60, max: 69,  emoji: '', label: '소량매수',      color: '#6B8A5A', bg: 'rgba(107, 138, 90, 0.11)', multiplier: 1.0 },
@@ -3681,7 +3700,7 @@ const TIERS = [
   { min: 30, max: 39,  emoji: '', label: '매수 보류',     color: '#B8813F', bg: 'rgba(184, 129, 63, 0.14)', multiplier: 0, sellPct: 0 },
   { min: 20, max: 29,  emoji: '', label: '소량익절',      color: '#D9542B', bg: 'rgba(217, 84, 43, 0.11)',  multiplier: 0, sellPct: 0.1 },
   { min: 10, max: 19,  emoji: '', label: '강력익절',      color: '#BF4620', bg: 'rgba(191, 70, 32, 0.15)',  multiplier: 0, sellPct: 0.2 },
-  { min: 0,  max: 9,   emoji: '', label: '극한탐욕 익절', color: '#A03D1F', bg: 'rgba(160, 61, 31, 0.18)',  multiplier: 0, sellPct: 0.3 },
+  { min: 0,  max: 9,   emoji: '', label: '극단적 탐욕 익절', color: '#A03D1F', bg: 'rgba(160, 61, 31, 0.18)',  multiplier: 0, sellPct: 0.3 },
 ];
 function getTier(s) { if (s==null) return null; return TIERS.find(t => s>=t.min && s<=t.max); }
 
@@ -3886,6 +3905,7 @@ function renderGroup(group) {
     if (tier) {
       if (tier.multiplier > 0) {
         actionText = `월정액 × ${tier.multiplier}배`;
+        if (state.monthlyBase > 0) actionText += `<span class="action-sub">약 ${fmtManwon(state.monthlyBase * tier.multiplier)}</span>`;
         actionColor = tier.color;
       } else if (tier.sellPct) {
         actionText = `보유량 ${tier.sellPct*100}% 익절`;
@@ -4697,7 +4717,7 @@ async function refreshAll() {
         const gaugeEl = document.getElementById('ddokjae-value');
         if (gaugeEl) {
           gaugeEl.textContent = ttokjaeFG;
-          const label = ttokjaeFG<25?'극공포':ttokjaeFG<45?'공포':ttokjaeFG<=55?'중립':ttokjaeFG<=75?'탐욕':'극탐욕';
+          const label = ttokjaeFG<25?'극단적 공포':ttokjaeFG<45?'공포':ttokjaeFG<=55?'중립':ttokjaeFG<=75?'탐욕':'극단적 탐욕';
           const color = ttokjaeFG<25?'#3F6B4A':ttokjaeFG<45?'#5A7C5A':ttokjaeFG<=55?'#8A6D3B':ttokjaeFG<=75?'#B8813F':'#A03D1F';
           const statusEl = document.getElementById('ddokjae-status');
           if (statusEl) { statusEl.textContent = label; statusEl.style.background = color; statusEl.style.color = 'var(--white)'; }
@@ -4787,7 +4807,7 @@ function calculateTtokjaeFG() {
   
   // Update gauge
   document.getElementById('ddokjae-value').textContent = ttokjaeFG;
-  const label = ttokjaeFG<25?'극공포':ttokjaeFG<45?'공포':ttokjaeFG<=55?'중립':ttokjaeFG<=75?'탐욕':'극탐욕';
+  const label = ttokjaeFG<25?'극단적 공포':ttokjaeFG<45?'공포':ttokjaeFG<=55?'중립':ttokjaeFG<=75?'탐욕':'극단적 탐욕';
   const color = ttokjaeFG<25?'#3F6B4A':ttokjaeFG<45?'#5A7C5A':ttokjaeFG<=55?'#8A6D3B':ttokjaeFG<=75?'#B8813F':'#A03D1F';
   const statusEl = document.getElementById('ddokjae-status');
   statusEl.textContent = label;
@@ -4849,10 +4869,29 @@ function setupDragDrop() {
 // ============================================================
 // GUIDE
 // ============================================================
+// 평소 월 적립액(만원) — 선택 입력. 넣으면 "월정액 × N배"를 금액으로도 보여 준다.
+function fmtManwon(m) {
+  const v = Math.round(m * 10) / 10;
+  if (v >= 10000) {
+    const eok = Math.floor(v / 10000), rest = Math.round((v - eok * 10000) * 10) / 10;
+    return rest > 0 ? `${eok}억 ${rest.toLocaleString('ko-KR')}만원` : `${eok}억원`;
+  }
+  return `${v.toLocaleString('ko-KR')}만원`;
+}
+function onMonthlyBase(v) {
+  const n = Number(v);
+  state.monthlyBase = (isFinite(n) && n > 0) ? n : 0;
+  saveState();
+  renderGroups();
+  renderGuide();
+}
+
 function renderGuide() {
+  const mbInput = document.getElementById('monthly-base');
+  if (mbInput && document.activeElement !== mbInput) mbInput.value = state.monthlyBase > 0 ? state.monthlyBase : '';
   document.getElementById('guide-grid').innerHTML = TIERS.map(t => {
     let action;
-    if (t.multiplier > 0) action = `<b style="color:${t.color};">${t.multiplier}배</b> 매수`;
+    if (t.multiplier > 0) action = `월정액의 <b style="color:${t.color};">${t.multiplier}배</b> 매수` + (state.monthlyBase > 0 ? ` <span style="white-space:nowrap;">(약 ${fmtManwon(state.monthlyBase * t.multiplier)})</span>` : '');
     else if (t.sellPct) action = `보유 <b style="color:${t.color};">${t.sellPct*100}%</b> 익절`;
     else action = `<b style="color:${t.color};">매수 보류</b>`;
     return `<div class="guide-card" style="border-color:${t.color};">
