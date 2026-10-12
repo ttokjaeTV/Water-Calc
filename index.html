@@ -1152,7 +1152,23 @@ body {
 .be-rc .l { font-size: 13px; font-weight: 700; color: var(--down); }
 .be-rc .r { font-size: 16px; font-weight: 800; color: var(--red); font-variant-numeric: tabular-nums; }
 .be-rc.hl { border-color: var(--accent); background: var(--accent-soft); }
+.be-mini { padding: 7px 12px; font-size: 13.5px; font-weight: 700; border-radius: 8px; }
+.be-copy-bar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.be-time { margin-top: 12px; background: var(--bg-alt); border-radius: 10px; padding: 12px 14px; }
+.be-time-head { font-size: 14px; font-weight: 800; color: var(--ink); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.be-time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.be-time-grid div { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; color: var(--ink-soft); font-weight: 600; }
+.be-time-grid b { display: block; font-size: 17px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.be-same { margin-top: 12px; background: var(--bg); border: 1px solid var(--border); border-left: 4px solid var(--down); border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.7; color: var(--ink-soft); }
+.be-same b { color: var(--ink); font-weight: 800; }
+.be-same .be-same-h { font-size: 14.5px; font-weight: 800; color: var(--ink); margin-bottom: 4px; }
+.be-links { margin-top: 14px; font-size: 13.5px; line-height: 1.7; color: var(--ink-soft); }
+.be-links a { color: var(--accent); font-weight: 700; text-decoration: none; border-bottom: 1px solid rgba(217,84,43,.35); }
+.calc-method { margin: 24px 0 8px; padding: 6px 20px 16px; }
+.calc-method .explain-list li { font-size: 14px; line-height: 1.75; }
+.footer .safe-note { max-width: 700px; margin: 0 auto 10px; font-size: 13.5px; color: var(--ink-soft); }
 @media (max-width: 768px) {
+  .calc-method { padding: 4px 14px 14px; }
   .be-grid { grid-template-columns: 1fr 1fr; }
   .be-grid.be-g3 .be-field:first-child { grid-column: 1 / -1; }
   .be-lbl { display: none; }
@@ -1836,6 +1852,7 @@ body {
       <button type="button" data-cur="₩" class="on">원 ₩</button>
       <button type="button" data-cur="$">달러 $</button>
     </div>
+    <button type="button" class="btn btn-ghost be-mini" id="be-example" title="현재가 7,000원 · 100주 · 평단 10,000원에서 100주 더 사는 예시">예시로 계산해 보기</button>
   </div>
 
   <div class="be-grid be-g3">
@@ -1922,6 +1939,11 @@ body {
       <p class="be-note" style="margin-top:10px;">필요 상승률 = 손실률 ÷ (100 − 손실률). 수수료·세금은 빼고 계산한 값입니다. 지금 손실과 가장 가까운 칸이 표시됩니다.</p>
     </div>
   </details>
+
+  <div class="be-links">
+    몇 번에 나눠 살지 미리 정해 두려면 <a href="https://ttokjaetv.github.io/split-trade/" target="_blank" rel="noopener">분할매수·매도 평단가 계산기</a>,
+    손실을 메우는 데 필요한 상승률과 기간을 더 자세히 보려면 <a href="https://ttokjaetv.github.io/loss-recovery/" target="_blank" rel="noopener">손실 복구 계산기</a>를 함께 써 보세요.
+  </div>
 </div>
 
 <div class="step-label">
@@ -2092,7 +2114,32 @@ body {
   </div>
 </div>
 
+<!-- 계산 방법과 가정 / 계산에 넣지 않은 것 -->
+<div class="explain calc-method">
+  <div class="explain-item">
+    <div class="explain-h">계산 방법과 가정</div>
+    <ul class="explain-list">
+      <li><b>물타기 후 평단</b> = (보유 수량 × 평단 + 추가 수량 × 매수 단가) ÷ 전체 수량. 매수 단가를 비우면 현재가에 산다고 봅니다.</li>
+      <li><b>본전까지 필요한 상승률</b> = 평단 ÷ 현재가 − 1. 수수료·거래세를 켜면 평단 대신 '본전 가격'으로 나눕니다.</li>
+      <li><b>목표 평단 역계산</b>: 더 사야 할 수량 = 보유 수량 × (평단 − 목표 평단) ÷ (목표 평단 − 매수 단가), 소수점은 올림. 목표 평단이 매수 단가(보통 현재가) 이하라면 아무리 많이 사도 만들 수 없습니다.</li>
+      <li><b>본전까지 걸리는 기간</b> = ln(1 + 필요 상승률) ÷ ln(1 + 연 기대수익률). 해마다 같은 비율로 오른다고 본 단순 계산이고, 실제 주가는 이렇게 고르게 움직이지 않습니다.</li>
+      <li><b>평가손익</b>은 증권사 앱처럼 (현재가 − 평단) × 수량으로 봅니다. 현재가에 더 사면 평단은 내려가도 이 금액은 그대로입니다.</li>
+      <li><b>9단계 매수·익절 신호</b>는 시장(변동성·공포탐욕지수)과 종목(보조지표) 점수를 가중 평균한 참고 점수이며, 앞으로의 주가를 맞히는 값이 아닙니다.</li>
+    </ul>
+  </div>
+  <div class="explain-item">
+    <div class="explain-h">계산에 넣지 않은 것</div>
+    <ul class="explain-list">
+      <li>매매차익·분배금에 붙는 세금, 해외주식 환전 비용과 환율 변동</li>
+      <li>보유 중에 받는 배당·분배금 (재투자로 평단이 내려가는 효과 포함)</li>
+      <li>매매 수수료·거래세 (STEP 06에서 체크했을 때만 반영)</li>
+      <li>추가 매수에 쓴 돈을 다른 곳에 넣었을 때의 결과(기회비용)</li>
+    </ul>
+  </div>
+</div>
+
 <div class="footer">
+  <div class="safe-note">🔒 입력한 숫자는 이 브라우저 안에서만 계산되며, 서버로 보내지 않습니다. 보유 종목·수량·평단과 기록은 다음에 이어 쓸 수 있도록 이 기기 브라우저에만 저장됩니다.</div>
   <div class="disclaimer">
     ※ 매수·익절 신호와 평단은 세금·수수료를 넣지 않은 값입니다. 매매 수수료·거래세는 STEP 06에서 켰을 때만 '들어간 돈'·'본전 가격'·목표가에 반영하며, 매매차익 세금과 환전 비용은 넣지 않았습니다.<br>
     특정 종목의 매수·매도를 권유하지 않으며,
@@ -5299,7 +5346,7 @@ DS.init().then(renderMacroExtra).catch(() => {});
 const BE_KEY = 'ttokjae_be_v1';
 const BE_TARGETS = [0, 5, 10, 20, 30];
 const BE_LOSSES = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90];
-const be = { cur: '₩', mode: 'qty', custom: 50 };
+const be = { cur: '₩', mode: 'qty', custom: 50, rate: 7 };
 
 function beEl(id) { return document.getElementById(id); }
 function beNum(id) {
@@ -5339,7 +5386,7 @@ function beFormatInput(inp) {
 
 function beSave() {
   try {
-    const o = { cur: be.cur, mode: be.mode, custom: be.custom, costOn: beEl('be-cost-on').checked, tax: beEl('be-tax').value };
+    const o = { cur: be.cur, mode: be.mode, custom: be.custom, rate: be.rate, costOn: beEl('be-cost-on').checked, tax: beEl('be-tax').value };
     ['be-price', 'be-qty', 'be-avg', 'be-add-qty', 'be-add-amt', 'be-target', 'be-buy', 'be-fee'].forEach(id => { o[id] = beEl(id).value; });
     localStorage.setItem(BE_KEY, JSON.stringify(o));
   } catch (e) { /* 저장이 막힌 브라우저에서도 계산은 된다 */ }
@@ -5352,6 +5399,7 @@ function beLoad() {
     if (o.cur) be.cur = o.cur;
     if (o.mode) be.mode = o.mode;
     if (Number.isFinite(o.custom)) be.custom = o.custom;
+    if (Number.isFinite(o.rate)) be.rate = o.rate;
     beEl('be-cost-on').checked = !!o.costOn;
     if (o.tax != null) beEl('be-tax').value = o.tax;
   } catch (e) {}
@@ -5530,7 +5578,52 @@ function beCalc() {
     <div class="be-note">수익률은 들어간 돈${costOn ? '(매수 수수료 포함)' : ''} 대비, 팔고 손에 남는 금액${costOn ? '(매도 수수료·거래세 차감)' : ''} 기준입니다.
       ${costOn ? '' : '수수료·거래세를 넣으려면 위의 체크 상자를 켜세요. '}매매차익·분배금에 붙는 세금은 빼기 전 금액입니다.</div>`;
 
-  out.innerHTML = `<div class="be-hero">${hero}</div>${cards}${warn}${table}`;
+  // ── 본전까지 걸리는 기간: ln(1+필요상승률) ÷ ln(1+연 기대수익률) ──
+  const rate = be.rate / 100;
+  let timeBox = '';
+  if (need0 > 0 || (has && need1 > 0)) {
+    const cellT = (label, need) => `<div>${label}<b>${beYears(need, rate)}</b></div>`;
+    timeBox = `<div class="be-time">
+      <div class="be-time-head">해마다 <span class="be-custom"><input id="be-rate" inputmode="decimal" value="${be.rate}">%</span>씩 오른다고 하면 본전까지</div>
+      <div class="be-time-grid"${has ? '' : ' style="grid-template-columns:1fr;"'}>${cellT('지금 그대로', need0)}${has ? cellT(afterLabel, need1) : ''}</div>
+      <div class="be-note">해마다 같은 비율로 오른다고 본 단순 계산입니다. 실제 주가는 이렇게 고르게 움직이지 않고, 더 떨어질 수도 있습니다.</div>
+    </div>`;
+  }
+
+  // ── 평단은 내려가도 손실 금액은 그대로 (매수 시점, 현재가 기준 평가손익) ──
+  const plR0 = (P - A0) * Q0, plR1 = (P - A1) * Q1, plDiff = q * (P - B);
+  let sameBox = '';
+  if (has && plR0 < 0) {
+    const eps = beIsUsd() ? 0.005 : 0.5;
+    const same = Math.abs(plDiff) < eps;
+    const nums = `현재가 ${beMoney(P)} 기준 평가손익은 매수 전 <b class="be-neg">${beMoney(plR0, { sign: true })}</b>(${bePct(plR0 / (A0 * Q0))}),
+      매수 직후 <b class="${beCls(plR1)}">${beMoney(plR1, { sign: true })}</b>(${bePct(plR1 / (A1 * Q1))})입니다.`;
+    sameBox = same
+      ? `<div class="be-same"><div class="be-same-h">평단은 내려가도 손실 금액은 그대로입니다</div>${nums}
+          손실률이 줄어 보이는 건 같은 손실을 더 큰 원금으로 나눴기 때문이고, 손실 금액은 주가가 올라야 줄어듭니다.
+          <span class="be-note" style="display:block;margin-top:4px;">증권사 앱의 평가손익과 같은 방식(수수료 빼기 전)입니다.</span></div>`
+      : `<div class="be-same"><div class="be-same-h">평단이 바뀌어도 손실 금액은 매수가 차이만큼만 달라집니다</div>${nums}
+          추가분을 현재가가 아닌 ${beMoney(B)}에 산다고 넣어서, 그 차이 ${beQty(q)} × (${beMoney(P)} − ${beMoney(B)}) = <b>${beMoney(plDiff, { sign: true })}</b>만큼만 달라졌습니다.
+          현재가에 사면 손실 금액은 매수 전과 똑같습니다.
+          <span class="be-note" style="display:block;margin-top:4px;">증권사 앱의 평가손익과 같은 방식(수수료 빼기 전)입니다.</span></div>`;
+  }
+
+  // ── 결과 복사용 요약 ──
+  be.last = { P, Q0, A0, B, q, Q1, A1, need0, need1, has, plR0, plR1, rate, costOn, f, tx, pl0, inv0, afterLabel };
+  const copyBar = `<div class="be-copy-bar"><button type="button" class="btn btn-ghost be-mini" id="be-copy">결과 복사</button></div>`;
+
+  out.innerHTML = `${copyBar}<div class="be-hero">${hero}</div>${cards}${timeBox}${sameBox}${warn}${table}`;
+
+  const cb = beEl('be-copy');
+  if (cb) cb.addEventListener('click', () => beCopy(cb));
+  const ri = beEl('be-rate');
+  if (ri) {
+    ri.addEventListener('change', () => {
+      const v = Number(String(ri.value).replace(/,/g, ''));
+      if (Number.isFinite(v) && v > 0 && v <= 100) be.rate = v;
+      beCalc();
+    });
+  }
 
   const ci = beEl('be-custom');
   if (ci) {
@@ -5540,6 +5633,91 @@ function beCalc() {
       beCalc();
     });
   }
+}
+
+// 본전까지 걸리는 햇수. 1년 미만은 개월로.
+function beYears(need, r) {
+  if (!(need > 0)) return '이미 본전 위';
+  if (!(r > 0)) return '계산 불가';
+  const y = Math.log(1 + need) / Math.log(1 + r);
+  if (y < 1) return `약 ${Math.max(1, Math.round(y * 12))}개월`;
+  return `약 ${y.toFixed(1)}년`;
+}
+
+// 불러온 종목의 9단계 가이드 신호 (STEP 02 에 등록된 종목일 때만)
+function beSignalText() {
+  const id = beEl('be-ticker')?.value;
+  if (!id) return null;
+  const t = (state.tickers || []).find(x => String(x.id) === String(id));
+  if (!t) return null;
+  const score = compositeScore(t.group, t);
+  const tier = getTier(score);
+  if (score == null || !tier) return null;
+  const knife = t.ind && Number(t.ind.knife) === 1 ? ' · 하락추세 진행중' : '';
+  return `${score}점 · ${tier.label} 구간${knife}`;
+}
+
+function beCopyText() {
+  const r = be.last;
+  if (!r) return '';
+  const id = beEl('be-ticker')?.value;
+  const t = id ? (state.tickers || []).find(x => String(x.id) === String(id)) : null;
+  const name = t ? `${t.name || t.ticker}(${t.ticker}) · ` : '';
+  const L = [];
+  L.push(`[물타기 평단 계산] ${name}현재가 ${beMoney(r.P)}`);
+  L.push(`기존: 평단 ${beMoney(r.A0)} × ${beQty(r.Q0)} · 평가손익 ${beMoney(r.plR0, { sign: true })}(${bePct(r.plR0 / (r.A0 * r.Q0))})`);
+  L.push(r.has
+    ? `추가 매수: ${beQty(r.q)} × ${beMoney(r.B)} = ${beMoney(r.q * r.B)} → 평단 ${beMoney(r.A1)} × ${beQty(r.Q1)}`
+    : '추가 매수: 없음');
+  const yrs = r.need0 > 0 ? ` (해마다 ${be.rate}%씩 오르면 ${beYears(r.need0, r.rate)}${r.has ? ` → ${beYears(r.need1, r.rate)}` : ''})` : '';
+  const needTxt = n => n > 0 ? bePct(n) : '이미 본전 위';
+  L.push(`본전까지 필요 상승률: ${needTxt(r.need0)}${r.has ? ` → ${needTxt(r.need1)}` : ''}${yrs}`);
+  if (r.has && r.plR0 < 0) {
+    L.push(`매수 직후 평가손익: ${beMoney(r.plR1, { sign: true })} (평단은 내려가도 손실 금액은 매수 전과 ${Math.abs(r.plR1 - r.plR0) < (beIsUsd() ? 0.005 : 0.5) ? '같음' : '매수가 차이만큼만 다름'})`);
+  }
+  const sig = beSignalText();
+  if (sig) L.push(`9단계 물타기 신호: ${sig}`);
+  if (r.costOn) L.push(`수수료 ${(r.f * 100).toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}% · 거래세 ${(r.tx * 100).toFixed(2)}% 반영`);
+  L.push(location.href.split('?')[0].split('#')[0]);
+  return L.join('\n');
+}
+
+function beCopy(btn) {
+  const text = beCopyText();
+  if (!text) return;
+  const done = () => {
+    const old = btn.textContent;
+    btn.textContent = '복사했습니다';
+    setTimeout(() => { btn.textContent = old; }, 1600);
+  };
+  const fallback = () => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (ok) done(); else showToast('복사하지 못했습니다. 직접 선택해 복사해 주세요.', true);
+    } catch (e) { showToast('복사하지 못했습니다. 직접 선택해 복사해 주세요.', true); }
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(done, fallback);
+  } else fallback();
+}
+
+function beExample() {
+  beEl('be-ticker').value = '';
+  beSetCur('₩');
+  beSetMode('qty');
+  beEl('be-price').value = '7,000';
+  beEl('be-qty').value = '100';
+  beEl('be-avg').value = '10,000';
+  beEl('be-add-qty').value = '100';
+  beEl('be-buy').value = '';
+  beCalc();
 }
 
 function renderBeRecover(lossPct) {
@@ -5569,6 +5747,7 @@ function initBreakeven() {
   beEl('be-ticker').addEventListener('change', e => { if (e.target.value) beLoadTicker(e.target.value); });
   beEl('be-cost-on').addEventListener('change', e => { beEl('be-cost').classList.toggle('on', e.target.checked); beCalc(); });
   beEl('be-tax').addEventListener('change', beCalc);
+  beEl('be-example').addEventListener('click', beExample);
   document.querySelectorAll('#be-card .be-in').forEach(inp => {
     inp.addEventListener('input', () => {
       // 숫자·쉼표·소수점만 남긴다
