@@ -1919,7 +1919,7 @@ body {
         </label>
       </div>
       <div class="be-note">
-        거래세율은 2026년 1월 1일 이후 매도분 기준입니다(코스피 0.20%는 농어촌특별세 0.15% 포함).
+        거래세율은 2026년 1월 1일 이후 매도분 기준입니다(코스피 0.20%는 증권거래세 0.05%에 농어촌특별세 0.15%를 더한 값, 코스닥 0.20%는 증권거래세만이고 농어촌특별세는 없음).
         매매차익에 붙는 세금(해외주식 양도소득세, 국내상장 해외 ETF 배당소득세)은 <b>이익이 났을 때만</b> 붙기 때문에 본전 가격에는 영향이 없고,
         아래 목표 수익 행은 이 세금을 빼기 전 기준입니다. 해외주식 환전 비용은 넣지 않았습니다.
       </div>
@@ -5370,7 +5370,7 @@ function beMoney(v, { ceil = false, sign = false } = {}) {
 function bePct(v, d = 1) {
   if (v == null || !Number.isFinite(v)) return '-';
   const x = Math.round(v * 100 * Math.pow(10, d)) / Math.pow(10, d);
-  return `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toFixed(d)}%`;
+  return `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d })}%`;
 }
 // 금액 뒤 조사. 원화는 '원'(받침 있음), 달러는 'N달러'로 읽으니 받침 없음.
 function beJ(withB, noB) { return beIsUsd() ? noB : withB; }
@@ -5509,10 +5509,10 @@ function beCalc() {
     hero = `<div class="be-hero-label">본전까지 필요한 상승률</div>
       <div class="be-hero-main">
         <span class="be-hero-num old">${bePct(need0)}</span><span class="be-hero-arrow">→</span>
-        <span class="be-hero-num">${bePct(need1)}</span>
+        <span class="be-hero-num">${need1 > 0 ? bePct(need1) : '이미 본전 위'}</span>
       </div>
       <div class="be-hero-desc">${beQty(q)}를 ${beMoney(B)}에 더 사면 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} ${bePct(A1 / A0 - 1)} 내려가고,
-        본전 가격은 <b>${beMoney(be1, UP)}</b>${beJ('이','가')} 됩니다. 대신 들어간 돈은 ${beMoney(inv0)} → ${beMoney(inv1)}${beJ('으로','로')} <b>${ratio.toFixed(2)}배</b>가 됩니다.</div>`;
+        본전 가격은 <b>${beMoney(be1, UP)}</b>${need1 > 0 ? `${beJ('이','가')} 됩니다.` : `${beJ('으로','로')} 현재가(${beMoney(P)})보다 낮아져 이미 본전 위입니다.`} 대신 들어간 돈은 ${beMoney(inv0)} → ${beMoney(inv1)}${beJ('으로','로')} <b>${ratio.toFixed(2)}배</b>가 됩니다.</div>`;
   } else {
     hero = `<div class="be-hero-label">본전까지 필요한 상승률</div>
       <div class="be-hero-main"><span class="be-hero-num">${bePct(has ? need1 : need0)}</span></div>
@@ -5545,9 +5545,16 @@ function beCalc() {
     const d = 0.10, Pd = P * (1 - d);
     const l0 = Pd * Q0 * sellKeep - inv0, l1 = Pd * Q1 * sellKeep - inv1;
     const extra = has && be.mode === 'target' ? `목표 평단 ${beMoney(beNum('be-target'))}${beJ('을','를')} 만들려면 <b>${beQty(q)}</b>(약 ${beMoney(q * B * (1 + f))})가 필요합니다. ` : '';
-    warn = `<div class="be-warn">${extra}평단이 내려간 만큼 비중도 커졌습니다. 여기서 <b>10% 더 떨어지면</b> 손실은
+    // 10% 떨어져도 이익이면(물타기 후 평단이 현재가보다 한참 낮을 때) '손실'이라 부르지 않는다.
+    const plW = v => v < -1e-9 ? `손실 <b class="be-neg">${beMoney(v, { sign: true })}</b>`
+      : v > 1e-9 ? `이익 <b class="be-pos">${beMoney(v, { sign: true })}</b>` : '손익 <b>0</b>';
+    warn = l0 < -1e-9 && l1 < -1e-9
+      ? `<div class="be-warn">${extra}평단이 내려간 만큼 비중도 커졌습니다. 여기서 <b>10% 더 떨어지면</b> 손실은
       지금 그대로일 때 <b class="be-neg">${beMoney(l0, { sign: true })}</b>, 물타기 후에는 <b class="be-neg">${beMoney(l1, { sign: true })}</b>입니다.
-      본전이 가까워지는 대신 같은 하락에 잃는 금액도 커진다는 점을 함께 보세요.</div>`;
+      본전이 가까워지는 대신 같은 하락에 잃는 금액도 커진다는 점을 함께 보세요.</div>`
+      : `<div class="be-warn">${extra}평단이 내려간 만큼 비중도 커졌습니다. 여기서 <b>10% 더 떨어지면</b>
+      지금 그대로일 때 ${plW(l0)}, 물타기 후에는 ${plW(l1)}입니다.
+      다만 같은 하락에 줄어드는 금액은 <b>${beMoney(pl0 - l0)} → ${beMoney(pl1 - l1)}</b>${beJ('으로','로')} 커진다는 점을 함께 보세요.</div>`;
   } else if (modeMsg && has === false && be.mode !== 'qty') {
     warn = '';
   }
