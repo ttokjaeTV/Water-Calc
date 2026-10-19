@@ -2153,12 +2153,8 @@ body {
 
 <script src="https://ttokjaetv.github.io/rules/v2026.1/rules.js"></script>
 <script>
-if (!window.TTOKJAE_RULES) {
-  var TJR_MSG = '기준값 파일(rules.js)을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';
-  var tjrShow = function () { document.body.insertAdjacentHTML('afterbegin', '<div role="alert" style="background:#fdecea;color:#b3261e;padding:12px 16px;text-align:center;font-weight:600">' + TJR_MSG + '</div>'); };
-  document.body ? tjrShow() : document.addEventListener('DOMContentLoaded', tjrShow);
-  throw new Error(TJR_MSG);
-}
+// rules.js(TTOKJAE_RULES)는 본전가 계산의 거래세 선택지에만 쓴다. 못 불러와도 대시보드는 멈추지 않고,
+// 그 선택지만 막는다(initBreakeven).
 // ============================================================
 // CONFIG & STATE
 // ============================================================
@@ -5751,11 +5747,16 @@ function renderBeRecover(lossPct) {
 function initBreakeven() {
   if (!beEl('be-card')) return;
   // 팔 때 거래세 선택지 값(%) = 증권거래세 + 농어촌특별세 (rules.js TRADE.securitiesTransactionTax). 저장된 선택('0.20' 등)과 같은 글자로 만든다
+  //  rules.js를 못 불러오면 그 선택지만 막고(거래세 0%로 계산되지 않게) 나머지 대시보드는 그대로 쓴다
+  const TJR = window.TTOKJAE_RULES;
   document.querySelectorAll('#be-tax option[data-tjr-tax]').forEach(o => {
-    const t = TTOKJAE_RULES.TRADE.securitiesTransactionTax[o.dataset.tjrTax];
+    if (!TJR) { o.disabled = true; o.textContent += ' — 기준값 파일을 불러오지 못해 지금은 선택할 수 없음'; return; }
+    const t = TJR.TRADE.securitiesTransactionTax[o.dataset.tjrTax];
     o.value = ((t.stt + t.rural) * 100).toFixed(2);
   });
   beLoad();
+  const taxSel = beEl('be-tax');
+  if (taxSel.selectedIndex < 0 || taxSel.options[taxSel.selectedIndex].disabled) taxSel.value = '0';
   beSetCur(be.cur);
   beSetMode(be.mode);
   beEl('be-cost').classList.toggle('on', beEl('be-cost-on').checked);
