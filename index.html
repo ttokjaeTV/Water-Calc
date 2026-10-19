@@ -1919,7 +1919,7 @@ body {
         </label>
       </div>
       <div class="be-note">
-        거래세율은 2026년 1월 1일 이후 매도분 기준입니다(코스피 0.20%는 증권거래세 0.05%에 농어촌특별세 0.15%를 더한 값, 코스닥 0.20%는 증권거래세만이고 농어촌특별세는 없음).
+        거래세율은 2026년 1월 1일 이후 매도분 기준입니다(코스피 <span data-rule="(TRADE.securitiesTransactionTax.kospi.stt+TRADE.securitiesTransactionTax.kospi.rural)*100" data-fmt="f2">0.20</span>%는 증권거래세 <span data-rule="TRADE.securitiesTransactionTax.kospi.stt*100" data-fmt="f2">0.05</span>%에 농어촌특별세 <span data-rule="TRADE.securitiesTransactionTax.kospi.rural*100" data-fmt="f2">0.15</span>%를 더한 값, 코스닥 <span data-rule="TRADE.securitiesTransactionTax.kosdaq.stt*100" data-fmt="f2">0.20</span>%는 증권거래세만이고 농어촌특별세는 없음).
         매매차익에 붙는 세금(해외주식 양도소득세, 국내상장 해외 ETF 배당소득세)은 <b>이익이 났을 때만</b> 붙기 때문에 본전 가격에는 영향이 없고,
         아래 목표 수익 행은 이 세금을 빼기 전 기준입니다. 해외주식 환전 비용은 넣지 않았습니다.
       </div>
@@ -2152,6 +2152,7 @@ body {
 <div class="toast" id="toast">저장되었습니다</div>
 
 <script src="https://ttokjaetv.github.io/rules/v2026.1/rules.js"></script>
+<script src="https://ttokjaetv.github.io/rules/fill-v1.js"></script>
 <script>
 // rules.js(TTOKJAE_RULES)는 본전가 계산의 거래세 선택지에만 쓴다. 못 불러와도 대시보드는 멈추지 않고,
 // 그 선택지만 막는다(initBreakeven).
