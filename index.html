@@ -1913,8 +1913,8 @@ body {
           <span>팔 때 거래세</span>
           <select class="be-select" id="be-tax" style="flex:none;">
             <option value="0">0% — 국내상장 ETF · 미국 주식</option>
-            <option value="0.20">0.20% — 코스피 · 코스닥 주식 (2026년)</option>
-            <option value="0.10">0.10% — 코넥스 주식 (2026년)</option>
+            <option data-tjr-tax="kospi">0.20% — 코스피 · 코스닥 주식 (2026년)</option>
+            <option data-tjr-tax="konex">0.10% — 코넥스 주식 (2026년)</option>
           </select>
         </label>
       </div>
@@ -2151,7 +2151,14 @@ body {
 
 <div class="toast" id="toast">저장되었습니다</div>
 
+<script src="https://ttokjaetv.github.io/rules/v2026.1/rules.js"></script>
 <script>
+if (!window.TTOKJAE_RULES) {
+  var TJR_MSG = '기준값 파일(rules.js)을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';
+  var tjrShow = function () { document.body.insertAdjacentHTML('afterbegin', '<div role="alert" style="background:#fdecea;color:#b3261e;padding:12px 16px;text-align:center;font-weight:600">' + TJR_MSG + '</div>'); };
+  document.body ? tjrShow() : document.addEventListener('DOMContentLoaded', tjrShow);
+  throw new Error(TJR_MSG);
+}
 // ============================================================
 // CONFIG & STATE
 // ============================================================
@@ -5743,6 +5750,11 @@ function renderBeRecover(lossPct) {
 
 function initBreakeven() {
   if (!beEl('be-card')) return;
+  // 팔 때 거래세 선택지 값(%) = 증권거래세 + 농어촌특별세 (rules.js TRADE.securitiesTransactionTax). 저장된 선택('0.20' 등)과 같은 글자로 만든다
+  document.querySelectorAll('#be-tax option[data-tjr-tax]').forEach(o => {
+    const t = TTOKJAE_RULES.TRADE.securitiesTransactionTax[o.dataset.tjrTax];
+    o.value = ((t.stt + t.rural) * 100).toFixed(2);
+  });
   beLoad();
   beSetCur(be.cur);
   beSetMode(be.mode);
