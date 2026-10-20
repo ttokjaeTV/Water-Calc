@@ -5403,6 +5403,14 @@ function bePct(v, d = 1) {
   const x = Math.round(v * 100 * Math.pow(10, d)) / Math.pow(10, d);
   return `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d })}%`;
 }
+// 본전까지 필요한 상승률 표시: 0.1% 미만이면 소수 2자리, 그래도 0으로 보이면 0이 아닐 때까지 최대 4자리
+// (ETF처럼 비용이 작으면 +0.04%가 '+0.0%'로 보여 이미 본전처럼 읽히던 것 방지)
+function beNeedPct(v) {
+  if (v == null || !Number.isFinite(v)) return '-';
+  let d = Math.abs(v * 100) < 0.1 ? 2 : 1;
+  while (d < 4 && v !== 0 && Math.round(v * 100 * Math.pow(10, d)) === 0) d++;
+  return bePct(v, d);
+}
 // 금액 뒤 조사. 원화는 '원'(받침 있음), 달러는 'N달러'로 읽으니 받침 없음.
 function beJ(withB, noB) { return beIsUsd() ? noB : withB; }
 function beQty(q) { return `${(Math.round(q * 10000) / 10000).toLocaleString('ko-KR')}주`; }
@@ -5539,21 +5547,21 @@ function beCalc() {
     hero = `<div class="be-hero-label">지금 이미 본전 위에 있습니다</div>
       <div class="be-hero-main"><span class="be-hero-num">${bePct(pl0 / inv0)}</span></div>
       <div class="be-hero-desc">현재가가 본전 가격(${beP(px0, be0)})보다 높습니다.${
-        has ? ` 여기서 ${beQty(q)}를 더 사면 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} ${A1 > A0 ? '올라갑니다' : '내려갑니다'}${need1 > 0 ? `. 이 경우 본전까지 <b>${bePct(need1)}</b>가 다시 필요해집니다` : ''}.` : ''}</div>`;
+        has ? ` 여기서 ${beQty(q)}를 더 사면 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} ${A1 > A0 ? '올라갑니다' : '내려갑니다'}${need1 > 0 ? `. 이 경우 본전까지 <b>${beNeedPct(need1)}</b>가 다시 필요해집니다` : ''}.` : ''}</div>`;
   } else if (has && !isPyramid) {
     const ratio = inv1 / inv0;
     hero = `<div class="be-hero-label">본전까지 필요한 상승률</div>
       <div class="be-hero-main">
-        <span class="be-hero-num old">${bePct(need0)}</span><span class="be-hero-arrow">→</span>
-        <span class="be-hero-num">${need1 > 0 ? bePct(need1) : '이미 본전 위'}</span>
+        <span class="be-hero-num old">${beNeedPct(need0)}</span><span class="be-hero-arrow">→</span>
+        <span class="be-hero-num">${need1 > 0 ? beNeedPct(need1) : '이미 본전 위'}</span>
       </div>
       <div class="be-hero-desc">${beQty(q)}를 ${beMoney(B)}에 더 사면 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} ${bePct(A1 / A0 - 1)} 내려가고,
         본전 가격은 ${beB(px1, be1)}${need1 > 0 ? `${beJ('이','가')} 됩니다.` : `${beJ('으로','로')} 현재가(${beMoney(P)})보다 낮아져 이미 본전 위입니다.`} 대신 들어간 돈은 ${beMoney(inv0)} → ${beMoney(inv1)}${beJ('으로','로')} <b>${ratio.toFixed(2)}배</b>가 됩니다.</div>`;
   } else {
     hero = `<div class="be-hero-label">본전까지 필요한 상승률</div>
-      <div class="be-hero-main"><span class="be-hero-num">${bePct(has ? need1 : need0)}</span></div>
+      <div class="be-hero-main"><span class="be-hero-num">${beNeedPct(has ? need1 : need0)}</span></div>
       <div class="be-hero-desc">${has
-        ? `매수 단가(${beMoney(B)})가 지금 평단보다 높아 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} 오히려 올라갑니다. 본전까지 필요한 상승률도 ${bePct(need0)}에서 <b>${bePct(need1)}</b>로 커집니다.`
+        ? `매수 단가(${beMoney(B)})가 지금 평단보다 높아 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} 오히려 올라갑니다. 본전까지 필요한 상승률도 ${beNeedPct(need0)}에서 <b>${beNeedPct(need1)}</b>로 커집니다.`
         : `현재가 ${beMoney(P)}에서 ${beB(px0, be0)}까지 올라야 본전입니다.${modeMsg ? '' : ' 아래 추가 매수 칸을 채우면 물타기 후와 비교해 드립니다.'}`}</div>`;
   }
 
@@ -5566,7 +5574,7 @@ function beCalc() {
       <div class="be-row"><span>들어간 돈${costOn ? ' (수수료 포함)' : ''}</span><b>${beMoney(inv)}</b></div>
       <div class="be-row"><span>지금 팔면 손익${costOn ? ' (비용 차감)' : ''}</span><b class="${beCls(pl)}">${beMoney(pl, { sign: true })} (${bePct(pl / inv)})</b></div>
       <div class="be-row"><span>본전 가격</span><b>${(t => t.main + (t.calc ? ` <span class="be-calc">(계산값 ${t.calc})</span>` : ''))(beBeTxt(bpx, bep, costOn, TICKED))}</b></div>
-      <div class="be-row key"><span>본전까지</span><b class="${need > 0 ? 'be-pos' : ''}">${need > 0 ? bePct(need) : '이미 본전 위'}</b></div>
+      <div class="be-row key"><span>본전까지</span><b class="${need > 0 ? 'be-pos' : ''}">${need > 0 ? beNeedPct(need) : '이미 본전 위'}</b></div>
     </div>`;
   const cards = `<div class="be-cards">
       ${card('지금 그대로', Q0, A0, inv0, [px0, be0], need0, pl0, false)}
@@ -5730,7 +5738,7 @@ function beCopyText() {
     ? `추가 매수: ${beQty(r.q)} × ${beMoney(r.B)} = ${beMoney(r.q * r.B)} → 평단 ${beMoney(r.A1)} × ${beQty(r.Q1)}`
     : '추가 매수: 없음');
   const yrs = r.need0 > 0 ? ` (해마다 ${be.rate}%씩 오르면 ${beYears(r.need0, r.rate)}${r.has ? ` → ${beYears(r.need1, r.rate)}` : ''})` : '';
-  const needTxt = n => n > 0 ? bePct(n) : '이미 본전 위';
+  const needTxt = n => n > 0 ? beNeedPct(n) : '이미 본전 위';
   L.push(`본전까지 필요 상승률: ${needTxt(r.need0)}${r.has ? ` → ${needTxt(r.need1)}` : ''}${yrs}`);
   if (r.has && r.plR0 < 0) {
     L.push(`매수 직후 평가손익: ${beMoney(r.plR1, { sign: true })} (평단은 내려가도 손실 금액은 매수 전과 ${Math.abs(r.plR1 - r.plR0) < (beIsUsd() ? 0.005 : 0.5) ? '같음' : '매수가 차이만큼만 다름'})`);
