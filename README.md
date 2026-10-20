@@ -3,7 +3,7 @@
 시장 상황과 종목의 보조지표를 함께 보고, 물타기 강도를 9단계로 제시하는 도구.
 
 - 배포 주소: `https://ttokjaetv.github.io/Water-Calc/` (Pages 설정 후)
-- 로컬 폴더: `C:\Users\이상준\Desktop\Claude\Water Calc\`
+- 로컬 폴더: `C:\Users\이상준\Desktop\Claude\github\Water-Calc\`
 
 ---
 
@@ -160,7 +160,7 @@ TSLA 2026-09-04 기준 RSI가 시트 54.97 / 표준 50.93으로 갈린다. 둘 �
 ## 로컬 실행
 
 ```bash
-cd "C:\Users\이상준\Desktop\Claude\Water Calc"
+cd "C:\Users\이상준\Desktop\Claude\github\Water-Calc"
 LIMIT=60 python3 scripts/build_us_indicators.py    # LIMIT 없으면 전종목
 LIMIT=60 python3 scripts/build_kr_indicators.py
 python3 scripts/build_macro.py
