@@ -1133,6 +1133,7 @@ body {
 .be-row span { color: var(--ink-soft); font-weight: 600; }
 .be-row b { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
 .be-row.key b { font-size: 16px; }
+.be-calc { font-size: 12px; font-weight: 600; opacity: .75; white-space: nowrap; }
 .be-pos { color: var(--red); }   /* 상승·수익 */
 .be-neg { color: var(--down); } /* 하락·손실 — 사이트 기존 배지(pct-down)와 같은 색 */
 .be-warn { margin-top: 12px; background: rgba(160,61,31,.07); border: 1px solid rgba(160,61,31,.35); border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.7; color: var(--ink-soft); }
@@ -2120,7 +2121,7 @@ body {
     <div class="explain-h">계산 방법과 가정</div>
     <ul class="explain-list">
       <li><b>물타기 후 평단</b> = (보유 수량 × 평단 + 추가 수량 × 매수 단가) ÷ 전체 수량. 매수 단가를 비우면 현재가에 산다고 봅니다.</li>
-      <li><b>본전까지 필요한 상승률</b> = 평단 ÷ 현재가 − 1. 수수료·거래세를 켜면 평단 대신 '본전 가격'으로 나눕니다.</li>
+      <li><b>본전까지 필요한 상승률</b> = 평단 ÷ 현재가 − 1. 수수료·거래세를 켜면 평단 대신 '본전 가격'으로 나눕니다. 이때 본전 가격은 비용을 정확히 메우는 계산값을 <b>호가 단위로 올린, 실제로 주문할 수 있는 가격</b>입니다(주식은 주식 호가, 거래세 0%를 고르면 ETF·ETN 호가, 달러는 미국 호가). 계산값은 옆에 작게 적습니다.</li>
       <li><b>목표 평단 역계산</b>: 더 사야 할 수량 = 보유 수량 × (평단 − 목표 평단) ÷ (목표 평단 − 매수 단가), 소수점은 올림. 목표 평단이 매수 단가(보통 현재가) 이하라면 아무리 많이 사도 만들 수 없습니다.</li>
       <li><b>본전까지 걸리는 기간</b> = ln(1 + 필요 상승률) ÷ ln(1 + 연 기대수익률). 해마다 같은 비율로 오른다고 본 단순 계산이고, 실제 주가는 이렇게 고르게 움직이지 않습니다.</li>
       <li><b>평가손익</b>은 증권사 앱처럼 (현재가 − 평단) × 수량으로 봅니다. 현재가에 더 사면 평단은 내려가도 이 금액은 그대로입니다.</li>
@@ -2154,8 +2155,8 @@ body {
 <script src="https://ttokjaetv.github.io/rules/v2026.1/rules.js"></script>
 <script src="https://ttokjaetv.github.io/rules/fill-v1.js"></script>
 <script>
-// rules.js(TTOKJAE_RULES)는 본전가 계산의 거래세 선택지에만 쓴다. 못 불러와도 대시보드는 멈추지 않고,
-// 그 선택지만 막는다(initBreakeven).
+// rules.js(TTOKJAE_RULES)는 본전가 계산의 거래세 선택지와 호가 단위(beTickUp)에만 쓴다. 못 불러와도 대시보드는 멈추지 않고,
+// 그 선택지만 막고(initBreakeven) 본전 가격은 호가 단위로 올리지 않은 계산값으로 보여 준다.
 // ============================================================
 // CONFIG & STATE
 // ============================================================
@@ -5341,7 +5342,9 @@ DS.init().then(renderMacroExtra).catch(() => {});
 // 물타기(추가 매수) 후 새 평균단가, 그리고 현재가에서 본전·목표 수익까지 필요한 상승률.
 //   새 평단      = (보유수량 × 평단 + 추가수량 × 매수단가) ÷ (보유수량 + 추가수량)
 //   본전 가격    = 투입원금 ÷ (총수량 × (1 − 매도수수료 − 거래세))     ← 비용 미반영이면 = 평단
-//   필요 상승률  = 본전 가격 ÷ 현재가 − 1
+//                  비용 반영 시 화면의 본전 가격은 이 계산값을 호가 단위로 올린 '주문 가능한 가격'(beTickUp,
+//                  trading-cost 본전 매도가와 같은 규칙: 원화 주식 TRADE.krxTick · 거래세 0%(ETF·ETN) krxEtfTick · 달러 usTick)
+//   필요 상승률  = 본전 가격(주문 가능한 가격) ÷ 현재가 − 1
 //   목표가(r%)   = 투입원금 × (1 + r) ÷ (총수량 × (1 − 매도수수료 − 거래세))
 //   목표 평단 역산 수량 = 보유수량 × (평단 − 목표평단) ÷ (목표평단 − 매수단가)   (올림)
 // 투입원금은 비용 반영 시 (보유분 + 추가분) 매입금액 × (1 + 매수수수료). 평단 입력값은 증권사 표시처럼
@@ -5361,15 +5364,37 @@ function beNum(id) {
 }
 function beIsUsd() { return be.cur === '$'; }
 // 가격 표시. 본전·목표가는 그 가격 이상에 팔아야 하므로 올림(ceil)으로 보여 준다.
-function beMoney(v, { ceil = false, sign = false } = {}) {
+function beMoney(v, { ceil = false, sign = false, d: dd = null } = {}) {
   if (v == null || !Number.isFinite(v)) return '-';
-  const d = beIsUsd() ? 2 : 0;
+  const d = dd != null ? dd : beIsUsd() ? 2 : 0;
   const k = Math.pow(10, d);
   let x = ceil ? Math.ceil(v * k - 1e-9) / k : Math.round(v * k) / k;
   if (Object.is(x, -0)) x = 0;
   const s = Math.abs(x).toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
   const pre = x < 0 ? '−' : (sign && x > 0 ? '+' : '');
   return beIsUsd() ? `${pre}$${s}` : `${pre}${s}원`;
+}
+// 본전 가격을 실제로 주문할 수 있는 가격으로: 계산값 이상인 가장 낮은 호가(호가 단위 올림).
+//  달러면 TRADE.usTick, 원화는 거래세가 있으면(주식) TRADE.krxTick, 0%(국내상장 ETF·ETN)면 TRADE.krxEtfTick.
+//  호가 단위는 '가격 < 상한'인 첫 행에서 고른다(trading-cost krTick·krBreakeven 첫 올림과 같은 표·같은 식).
+//  rules.js를 못 불러왔거나 값이 이상하면 null → 호출하는 쪽이 계산값을 그대로 쓴다.
+function beTickUp(v, tx) {
+  const TJR = window.TTOKJAE_RULES;
+  if (!TJR || !(v > 0) || !Number.isFinite(v)) return null;
+  const T = beIsUsd() ? TJR.TRADE.usTick : tx > 0 ? TJR.TRADE.krxTick : TJR.TRADE.krxEtfTick;
+  let tick = T[T.length - 1][1];
+  for (const [lim, t] of T) if (v < lim) { tick = t; break; }
+  if (tick >= 1) return Math.ceil(v / tick - 1e-9) * tick;
+  const k = Math.round(1 / tick);                       // $0.01 → 100, $0.0001 → 10000
+  return Math.ceil(v * k - 1e-9) / k;
+}
+// 본전 가격 표시: 주문 가능한 가격(px)을 크게, 계산값(raw, 전처럼 올림 표시)이 다르게 보이면 작게 덧붙인다.
+//  ticked = 호가 단위로 올린 값일 때만 true(비용 미반영·rules.js 없음이면 전과 같은 표시)
+function beBeTxt(px, raw, ceil, ticked) {
+  const d = ticked && beIsUsd() && px < 1 ? 4 : null;    // 달러 $1 미만 호가는 $0.0001 단위
+  const main = beMoney(px, { ceil, d });
+  const calc = beMoney(raw, { ceil, d });
+  return { main, calc: calc !== main ? calc : null };
 }
 function bePct(v, d = 1) {
   if (v == null || !Number.isFinite(v)) return '-';
@@ -5491,14 +5516,20 @@ function beCalc() {
   const A1 = q > 0 ? (Q0 * A0 + q * B) / Q1 : A0;
   const inv0 = Q0 * A0 * (1 + f);
   const inv1 = (Q0 * A0 + q * B) * (1 + f);
-  const be0 = inv0 / (Q0 * sellKeep);
+  const be0 = inv0 / (Q0 * sellKeep);     // 본전 계산값
   const be1 = inv1 / (Q1 * sellKeep);
-  const need0 = be0 / P - 1, need1 = be1 / P - 1;
+  // 비용 반영 시 화면의 본전 가격 = 호가 단위로 올린 주문 가능한 가격(못 구하면 계산값). 비용 미반영이면 평단 그대로
+  const px0 = costOn ? (beTickUp(be0, tx) ?? be0) : be0;
+  const px1 = costOn ? (beTickUp(be1, tx) ?? be1) : be1;
+  const need0 = px0 / P - 1, need1 = px1 / P - 1;
   const pl0 = P * Q0 * sellKeep - inv0, pl1 = P * Q1 * sellKeep - inv1;
   const has = q > 0;
   const isPyramid = has && B > A0;         // 평단보다 비싸게 사면 평단이 오른다(불타기)
   // 비용 미반영이면 본전 = 평단이라 같은 반올림을 쓴다. 비용 반영 시에는 그 가격 이상에 팔아야 하므로 올림.
   const UP = { ceil: costOn };
+  const TICKED = costOn && !!window.TTOKJAE_RULES;      // 본전 가격을 호가 단위로 올렸는지
+  const beB = (px, raw) => { const t = beBeTxt(px, raw, costOn, TICKED); return `<b>${t.main}</b>${t.calc ? ` <span class="be-calc">(계산값 ${t.calc})</span>` : ''}`; };
+  const beP = (px, raw) => { const t = beBeTxt(px, raw, costOn, TICKED); return t.calc ? `${t.main}, 계산값 ${t.calc}` : t.main; };
   const afterLabel = (isPyramid || need0 <= 0) ? '추가 매수 후' : '물타기 후';
 
   // ── 상단 요약 ──
@@ -5506,7 +5537,7 @@ function beCalc() {
   if (need0 <= 0) {
     hero = `<div class="be-hero-label">지금 이미 본전 위에 있습니다</div>
       <div class="be-hero-main"><span class="be-hero-num">${bePct(pl0 / inv0)}</span></div>
-      <div class="be-hero-desc">현재가가 본전 가격(${beMoney(be0, UP)})보다 높습니다.${
+      <div class="be-hero-desc">현재가가 본전 가격(${beP(px0, be0)})보다 높습니다.${
         has ? ` 여기서 ${beQty(q)}를 더 사면 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} ${A1 > A0 ? '올라갑니다' : '내려갑니다'}${need1 > 0 ? `. 이 경우 본전까지 <b>${bePct(need1)}</b>가 다시 필요해집니다` : ''}.` : ''}</div>`;
   } else if (has && !isPyramid) {
     const ratio = inv1 / inv0;
@@ -5516,29 +5547,29 @@ function beCalc() {
         <span class="be-hero-num">${need1 > 0 ? bePct(need1) : '이미 본전 위'}</span>
       </div>
       <div class="be-hero-desc">${beQty(q)}를 ${beMoney(B)}에 더 사면 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} ${bePct(A1 / A0 - 1)} 내려가고,
-        본전 가격은 <b>${beMoney(be1, UP)}</b>${need1 > 0 ? `${beJ('이','가')} 됩니다.` : `${beJ('으로','로')} 현재가(${beMoney(P)})보다 낮아져 이미 본전 위입니다.`} 대신 들어간 돈은 ${beMoney(inv0)} → ${beMoney(inv1)}${beJ('으로','로')} <b>${ratio.toFixed(2)}배</b>가 됩니다.</div>`;
+        본전 가격은 ${beB(px1, be1)}${need1 > 0 ? `${beJ('이','가')} 됩니다.` : `${beJ('으로','로')} 현재가(${beMoney(P)})보다 낮아져 이미 본전 위입니다.`} 대신 들어간 돈은 ${beMoney(inv0)} → ${beMoney(inv1)}${beJ('으로','로')} <b>${ratio.toFixed(2)}배</b>가 됩니다.</div>`;
   } else {
     hero = `<div class="be-hero-label">본전까지 필요한 상승률</div>
       <div class="be-hero-main"><span class="be-hero-num">${bePct(has ? need1 : need0)}</span></div>
       <div class="be-hero-desc">${has
         ? `매수 단가(${beMoney(B)})가 지금 평단보다 높아 평단이 <b>${beMoney(A0)} → ${beMoney(A1)}</b>${beJ('으로','로')} 오히려 올라갑니다. 본전까지 필요한 상승률도 ${bePct(need0)}에서 <b>${bePct(need1)}</b>로 커집니다.`
-        : `현재가 ${beMoney(P)}에서 <b>${beMoney(be0, UP)}</b>까지 올라야 본전입니다.${modeMsg ? '' : ' 아래 추가 매수 칸을 채우면 물타기 후와 비교해 드립니다.'}`}</div>`;
+        : `현재가 ${beMoney(P)}에서 ${beB(px0, be0)}까지 올라야 본전입니다.${modeMsg ? '' : ' 아래 추가 매수 칸을 채우면 물타기 후와 비교해 드립니다.'}`}</div>`;
   }
 
   // ── 지금 그대로 / 물타기 후 카드 ──
-  const card = (title, Q, A, inv, bep, need, pl, after) => `
+  const card = (title, Q, A, inv, [bpx, bep], need, pl, after) => `
     <div class="be-card${after ? ' after' : ''}">
       <div class="be-card-title">${title}${after ? `<span class="be-chip">+${fmtQtyPlain(q)}주</span>` : ''}</div>
       <div class="be-row"><span>평균 단가</span><b>${beMoney(A)}</b></div>
       <div class="be-row"><span>보유 수량</span><b>${beQty(Q)}</b></div>
       <div class="be-row"><span>들어간 돈${costOn ? ' (수수료 포함)' : ''}</span><b>${beMoney(inv)}</b></div>
       <div class="be-row"><span>지금 팔면 손익${costOn ? ' (비용 차감)' : ''}</span><b class="${beCls(pl)}">${beMoney(pl, { sign: true })} (${bePct(pl / inv)})</b></div>
-      <div class="be-row"><span>본전 가격</span><b>${beMoney(bep, UP)}</b></div>
+      <div class="be-row"><span>본전 가격</span><b>${(t => t.main + (t.calc ? ` <span class="be-calc">(계산값 ${t.calc})</span>` : ''))(beBeTxt(bpx, bep, costOn, TICKED))}</b></div>
       <div class="be-row key"><span>본전까지</span><b class="${need > 0 ? 'be-pos' : ''}">${need > 0 ? bePct(need) : '이미 본전 위'}</b></div>
     </div>`;
   const cards = `<div class="be-cards">
-      ${card('지금 그대로', Q0, A0, inv0, be0, need0, pl0, false)}
-      ${has ? card(afterLabel, Q1, A1, inv1, be1, need1, pl1, true)
+      ${card('지금 그대로', Q0, A0, inv0, [px0, be0], need0, pl0, false)}
+      ${has ? card(afterLabel, Q1, A1, inv1, [px1, be1], need1, pl1, true)
             : `<div class="be-card" style="display:flex;align-items:center;justify-content:center;text-align:center;color:var(--ink-mute);font-size:14px;line-height:1.6;">
                  ${modeMsg || '추가 매수 수량(또는 금액·목표 평단)을 넣으면<br>물타기 후 숫자가 여기에 나옵니다.'}</div>`}
     </div>`;
@@ -5566,9 +5597,11 @@ function beCalc() {
   // ── 목표 수익률별 필요 주가 ──
   const targets = [...BE_TARGETS, 'custom'];
   const cell = (inv, Q, r) => {
-    const px = inv * (1 + r) / (Q * sellKeep);
+    const raw = inv * (1 + r) / (Q * sellKeep);
+    // 본전(0%) 행은 위 카드와 같은 주문 가능한 가격(호가 단위 올림)
+    const px = r === 0 && costOn ? (beTickUp(raw, tx) ?? raw) : raw;
     const up = px / P - 1;
-    return `<b>${beMoney(px, UP)}</b>
+    return `${r === 0 ? beB(px, raw) : `<b>${beMoney(px, UP)}</b>`}
       <small class="${up > 0 ? 'be-pos' : ''}">${up > 0 ? '<span class="be-lbl">현재가 대비 </span>' + bePct(up) : '이미 도달'}</small>
       <small style="color:var(--ink-mute);font-weight:600;">${r > 0 ? '수익 ' + beMoney(inv * r, { sign: true }) : '손익 0'}</small>`;
   };
@@ -5581,7 +5614,7 @@ function beCalc() {
       <td>${cell(inv0, Q0, r)}</td>${has ? `<td>${cell(inv1, Q1, r)}</td>` : ''}</tr>`;
   }).join('');
   const table = `
-    <div class="be-sub" style="margin-top:22px;">얼마까지 올라야 이만큼 벌까? <small>%는 현재가 ${beMoney(P)}에서 필요한 상승률${costOn ? ' · 비용을 넣은 목표가는 그 가격 이상에 팔아야 하는 값(올림)' : ''}</small></div>
+    <div class="be-sub" style="margin-top:22px;">얼마까지 올라야 이만큼 벌까? <small>%는 현재가 ${beMoney(P)}에서 필요한 상승률${costOn ? ' · 비용을 넣은 목표가는 그 가격 이상에 팔아야 하는 값(올림), 본전은 호가 단위로 올린 주문 가능한 가격' : ''}</small></div>
     <div style="overflow-x:auto;"><table class="be-table">
       <thead><tr><th>목표 수익률</th><th>지금 그대로</th>${has ? `<th>${afterLabel}</th>` : ''}</tr></thead>
       <tbody>${rows}</tbody>
