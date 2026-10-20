@@ -5608,7 +5608,8 @@ function beCalc() {
     const amt = beMoney(Math.round(Math.round(pl * k * 1e6) / 1e6) / k, { sign: true });   // 부동소수 끝수(…499999)를 정리하고 반올림(0.5는 올림)
     const zero = amt === beMoney(0);
     const nw = t => `<span class="be-nw">${t}</span>`;
-    return `${beBeTxt(px, raw, costOn, TICKED).main}에 팔면 ${nw(zero ? '손익 0' : amt)} ${nw(r > 0 ? `(목표 +${pct.toLocaleString('ko-KR', { maximumFractionDigits: 4 })}%)` : zero ? '(본전)' : '(본전 넘김)')}`;
+    // 휴대폰(be-lbl 숨김)에서는 바로 위에 있는 가격과 행 이름과 겹치는 '(목표 +n%)'를 빼고 '팔면 +손익'만 — 줄이 2~3줄로 감기지 않게
+    return `<span class="be-lbl">${beBeTxt(px, raw, costOn, TICKED).main}에 </span>팔면 ${nw(zero ? '손익 0' : amt)}${r > 0 ? `<span class="be-lbl"> ${nw(`(목표 +${pct.toLocaleString('ko-KR', { maximumFractionDigits: 4 })}%)`)}</span>` : ' ' + nw(zero ? '(본전)' : '(본전 넘김)')}`;
   };
   const cell = (inv, Q, r, pct) => {
     const raw = inv * (1 + r) / (Q * sellKeep);
