@@ -5625,7 +5625,7 @@ function beCalc() {
     const px = costOn ? (beTickUp(raw, tx) ?? raw) : raw;
     const up = px / P - 1;
     return `${beB(px, raw)}
-      <small class="${up > 0 ? 'be-pos' : ''}">${up > 0 ? '<span class="be-lbl">현재가 대비 </span>' + bePct(up) : '이미 도달'}</small>
+      <small class="${up > 0 ? 'be-pos' : ''}">${up > 0 ? '<span class="be-lbl">현재가 대비 </span>' + beNeedPct(up) : '이미 도달'}</small>
       <small class="be-prof" style="color:var(--ink-mute);font-weight:600;">${profitTxt(px, raw, inv, Q, r, pct)}</small>`;
   };
   const rows = targets.map(tg => {
