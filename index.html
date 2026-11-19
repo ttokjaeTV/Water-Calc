@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="/favicon.ico">
 <title>하락장 물타기 계산기 · 똑재TV</title>
 <!-- Pretendard 가변폰트 + 동적 서브셋.
      static 버전은 weight 하나당 한글 전체가 담긴 770KB 파일을 통째로 받는다.
@@ -854,6 +855,9 @@ body {
 .group.kr { border-top: 3px solid var(--kr-color); }
 
 /* TABLE */
+.scroll-hint { display: none; margin: 12px 0 -8px; text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-mute); }
+@media (max-width: 541px) { .scroll-hint.sh-541 { display: block; } }
+@media (max-width: 988px) { .scroll-hint.sh-988 { display: block; } }
 .table-wrap { overflow-x: auto; }
 .ticker-table td:nth-child(2) { min-width: 190px; }
 .ticker-table th:nth-child(2) { min-width: 190px; }
@@ -1487,6 +1491,7 @@ body {
     </div>
     <div class="group-indicator">적용 지수: <strong>VIX + CNN F&G</strong></div>
   </div>
+  <p class="scroll-hint sh-988" style="margin-bottom:8px" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
   <div class="table-wrap">
     <table class="ticker-table" id="table-us">
       <thead>
@@ -1522,6 +1527,7 @@ body {
     </div>
     <div class="group-indicator">적용 지수: <strong>VIX + CNN F&G</strong> (기초자산이 해외)</div>
   </div>
+  <p class="scroll-hint sh-988" style="margin-bottom:8px" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
   <div class="table-wrap">
     <table class="ticker-table" id="table-intl">
       <thead>
@@ -1557,6 +1563,7 @@ body {
     </div>
     <div class="group-indicator">적용 지수: <strong>VKOSPI + 똑재 공포탐욕지수</strong></div>
   </div>
+  <p class="scroll-hint sh-988" style="margin-bottom:8px" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
   <div class="table-wrap">
     <table class="ticker-table" id="table-kr">
       <thead>
@@ -1765,6 +1772,7 @@ body {
   <!-- 역사적 참고 사례 -->
   <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
     <div style="font-size: 15px;font-weight:600;margin-bottom:12px;color:var(--mint);">역사적 사례로 보는 종합점수 (기본 가중치 · RSI로 대신 계산)</div>
+    <p class="scroll-hint sh-541" style="margin-bottom:8px" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
     <div style="overflow-x:auto;">
       <table class="ticker-table" style="min-width:auto;">
         <thead>
