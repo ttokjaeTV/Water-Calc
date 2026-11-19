@@ -747,6 +747,7 @@ body {
 .add-ticker-header {
   font-size: 14px; color: var(--text-dim); margin-bottom: 10px;
   display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 4px 12px; /* 좁은 폭에서 안내 문구가 94px로 눌려 두 줄이 되던 것을 줄바꿈으로 */
 }
 .add-ticker-row {
   display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
@@ -856,11 +857,15 @@ body {
 
 /* TABLE */
 .scroll-hint { display: none; margin: 12px 0 -8px; text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-mute); }
-@media (max-width: 541px) { .scroll-hint.sh-541 { display: block; } }
 @media (max-width: 988px) { .scroll-hint.sh-988 { display: block; } }
+@media (max-width: 463px) { .scroll-hint.sh-463 { display: block; } }
+@media print { .scroll-hint { display: none !important; } }
 .table-wrap { overflow-x: auto; }
 .ticker-table td:nth-child(2) { min-width: 190px; }
 .ticker-table th:nth-child(2) { min-width: 190px; }
+/* 역사적 사례 표: 첫 칸(상황 이름)이 63px로 눌려 3~4줄로 쪼개지던 것을 막고, 숫자 칸(VIX)엔 종목표용 190px 최소폭을 적용하지 않는다 */
+.hist-table th:first-child, .hist-table td:first-child { min-width: 130px; }
+.hist-table th:nth-child(2), .hist-table td:nth-child(2) { min-width: 0; }
 .ticker-table .name { line-height: 1.35; }
 .ticker-table {
   width: 100%; border-collapse: separate; border-spacing: 0;
@@ -1447,7 +1452,7 @@ body {
 <div class="add-ticker-block">
   <div class="add-ticker-header">
     <span>종목 추가: 티커/코드/종목명 모두 검색 가능 → 자동 분류</span>
-    <span style="font-size: 13px;color:var(--text-mute);">드래그로 그룹 이동 가능</span>
+    <span style="font-size: 13px;color:var(--text-mute);white-space:nowrap;">드래그로 그룹 이동 가능</span>
   </div>
   <div class="add-ticker-row">
     <div class="ticker-input-wrap">
@@ -1772,9 +1777,9 @@ body {
   <!-- 역사적 참고 사례 -->
   <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
     <div style="font-size: 15px;font-weight:600;margin-bottom:12px;color:var(--mint);">역사적 사례로 보는 종합점수 (기본 가중치 · RSI로 대신 계산)</div>
-    <p class="scroll-hint sh-541" style="margin-bottom:8px" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
+    <p class="scroll-hint sh-463" style="margin-bottom:8px" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
     <div style="overflow-x:auto;">
-      <table class="ticker-table" style="min-width:auto;">
+      <table class="ticker-table hist-table" style="min-width:auto;">
         <thead>
           <tr>
             <th>상황</th>
